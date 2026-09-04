@@ -27,11 +27,21 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             room_state.init_room(self.room_code)
             room_state.add_player(
                 self.room_code,
-                self.player_id,
-                name=data["name"],
+                data["player"]
             )
+
         elif msg_type == "move":
+            #Data received is a Player type, containing all necessary information
             room_state.rooms[self.room_code]["players"][self.player_id]["position"] = data["position"]
+            room_state.rooms[self.room_code]["players"][self.player_id]["facing"] = data["facing"]
+
+            if data["isHunter"]:
+                room_state.check_found(
+                    self.room_code,
+                    self.player_id,
+
+                )
+
         elif msg_type == "start_game":
             room_state.start_game(self.room_code)
         
@@ -46,7 +56,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         state = room_state.get_state(self.room_code)
         await self.channel_layer.group_send(
             self.group_name,
-            {"type": "room.message", "payload": state}, #calls room_message function defined below for every consumer of the group
+            #calls room_message function defined below for every consumer of the group
+            {"type": "room.message", "payload": state}, 
         )
 
     async def room_message(self, event):

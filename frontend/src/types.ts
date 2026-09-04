@@ -4,6 +4,10 @@ interface Vector3 {
     y: number;
     z: number;
 }
+interface FacingAngles {
+    horizontal: number;
+    vertical: number
+}
 
 interface Cell {
     position: Vector3;
@@ -12,13 +16,31 @@ interface Cell {
     variant: "wall" | "tree" | "hole" | "empty";
 }
 
+interface Obstacle {
+    position: Vector3
+    width: number
+    height: number
+    depth: number
+
+    blocksVision: boolean
+    blocksMovement: boolean
+}
+
 interface Player {
     position: Vector3;
+    facing: FacingAngles;
     isHunter: boolean;
     isFound: boolean;
 
     id: string;
     name: string;
+}
+
+interface Lobby {
+    obstacles: Obstacle[];
+    verticalFov: number;
+    horizontalFov: number;
+    maxDistance: number;
 }
 
 interface LobbyResponse {
@@ -28,6 +50,7 @@ interface LobbyResponse {
 }
 
 type ServerMessage = 
+    | { type: "error", message: string }
     | { type: "state_update"; players: Player[] }
     | { type: "player_found"; playerId: string }
     | { type: "assigned_id"; playerId: string } 
@@ -35,8 +58,8 @@ type ServerMessage =
 
 
 type ClientMessage = 
-    | { type: "move"; position: Vector3; facing: Vector3 }
-    | { type: "join"; name: string}
+    | { type: "move"; position: Vector3; facing: FacingAngles }
+    | { type: "join"; player: Player}
     | { type: "start_game" }
 
 
