@@ -38,9 +38,6 @@ interface Player {
 
 interface Lobby {
     obstacles: Obstacle[];
-    verticalFov: number;
-    horizontalFov: number;
-    maxDistance: number;
 }
 
 interface LobbyResponse {
