@@ -1,0 +1,76 @@
+from .types import Obstacle, Player
+import random
+from .vision import Vision
+from .constants import ROUND_DURATION
+
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+import asyncio
+
+class Room:
+    def __init__(self, room_code: str, obstacles: dict) -> None:
+        self.room_code = room_code
+        self.group_name = f"lobby_{self.room_code}"
+        self.players: dict[str, Player] = {}
+        self.obstacles: list[Obstacle] = [Obstacle(obstacle) for obstacle in obstacles]
+        self.found: set[str] = set()
+        self.status = "waiting"
+        self.timer_task: asyncio.Task | None = None
+
+    async def broadcast(self, payload: dict):
+        channel_layer = get_channel_layer()
+        await channel_layer.group_send(
+            self.group_name,
+            {"type": "room.message", "payload": payload}
+        )
+
+    def start_round_timer(self):
+        await asyncio.sleep(ROUND_DURATION)
+
+    def add_player(self, player: Player):
+        self.players[player.id] = player
+
+    def remove_player(self, player_id: str):
+        self.players.pop(player_id, None)
+        self.found.discard(player_id)
+
+    def start_game(self):
+        player_ids = list(self.players.keys())
+        num_hunters = max(1, len(player_ids) // 4)
+        hunter_ids = set(random.sample(player_ids, num_hunters))
+
+        for pid, player in self.players.items():
+            player.is_hunter = pid in hunter_ids
+
+        self.status = "in_progress"
+
+    def hunters_won(self) -> bool:
+        hider_ids = [pid for pid, player in self.players.items() if not player.is_hunter]
+        return len(hider_ids) > 0 and all(pid in self.found for pid in hider_ids)
+
+    def attempt_capture(self, hunter_id: str, target_id: str) -> bool:
+        hunter = self.players.get(hunter_id)
+        target = self.players.get(target_id)
+
+        if hunter is None or target is None or not hunter.is_hunter or target.is_hunter or target.id in self.found:
+            return False
+
+        vision = Vision(
+            hor_facing=hunter.facing.horizontal,
+            ver_facing=hunter.facing.vertical,
+            x=hunter.position.x,
+            y=hunter.position.y,
+            z=hunter.position.z,
+            obstacles=self.obstacles
+        )
+
+        if vision.is_player_visible(target):
+            self.found.add(target.id)
+            return True
+        return False
+
+    def get_state(self) -> dict:
+        return {
+            "type": "state_update",
+            "players": [p.to_dict() for p in self.players.values()]
+        }

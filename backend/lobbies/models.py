@@ -1,4 +1,6 @@
 from django.db import models
+import random
+import string
 
 def generate_room_code():
     while True:
@@ -14,9 +16,10 @@ class Lobby(models.Model):
     ]
 
     room_code = models.CharField(max_length=8, unique=True, default=generate_room_code)
-    map_data = models.JSONField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="waiting")
     created_at = models.DateTimeField(auto_now_add=True)
+
+    obstacles = models.JSONField(default=list)
 
     def __str__(self):
         return self.room_code
