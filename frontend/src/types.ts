@@ -52,12 +52,14 @@ type ServerMessage =
     | { type: "player_found"; playerId: string }
     | { type: "assigned_id"; playerId: string } 
     | { type: "game_over"; winner: "seekers" | "hiders" }
+    | { type: "capture_result"; targetId: string; success: boolean }
 
 
 type ClientMessage = 
     | { type: "move"; position: Vector3; facing: FacingAngles }
     | { type: "join"; player: Player}
     | { type: "start_game" }
+    | { type: "capture_attempt"; targetId: string }
 
 
 

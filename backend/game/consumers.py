@@ -6,8 +6,15 @@ from channels.db import database_sync_to_async
 from .room import Room
 from .types import Obstacle, Player, Position, FacingAngles
 from ..lobbies.models import Lobby
+from .constants import ROUND_DURATION
+
+import asyncio
 
 rooms: dict[str, Room] = {}
+
+#Lobby consumers handle specific connections with clients, delegating all group broadcasting to the room class
+#We also store the rooms dict here which contains all active Rooms, easily retrieved using room_code stored in
+#self.room_code at connection
 
 class LobbyConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -43,6 +50,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         except Lobby.DoesNotExist:
             return None
 
+
     async def receive(self, text_data):
         data = json.loads(text_data)
         msg_type = data.get("type")
@@ -52,6 +60,15 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             player_data["id"] = self.player_id  # server-assigned id, don't trust client's
             self.room.add_player(Player(player_data))
 
+            await self.room.broadcast_state()
+
+        elif msg_type == "start_game":
+            self.room.start_game()
+            await self.room.broadcast_state()
+
+        elif msg_type == "end_game":
+            await self.room.end_game()
+
         elif msg_type == "move":
             player = self.room.players.get(self.player_id)
             if player is None:
@@ -59,26 +76,28 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             player.position = Position(**data["position"])
             player.facing = FacingAngles(**data["facing"])
 
-            if player.is_hunter:
-                self.room.check_found(self.player_id)
+            await self.room.broadcast_state()
 
-        elif msg_type == "start_game":
-            self.room.start_game()
+        elif msg_type == "capture_attempt":
+            success = self.room.attempt_capture(self.player_id, data["targetId"])
+            await self.send(text_data=json.dumps({
+                "type": "capture_result", "targetId": data["targetId"], "success": success
+            }))
 
-        await self.broadcast_state()
+            if success:
+                await self.room.broadcast_state()
+                if self.room.hunters_won():
+                    await self.room.end_game()
 
+    #Handles consumer disconnect, cleaning up the room from rooms if all players have disconnected
     async def disconnect(self, close_code):
         if hasattr(self, "room"):
             self.room.remove_player(self.player_id)
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
-            await self.broadcast_state()
+            if not self.room.players:
+                rooms.pop(self.room_code, None)
+                if self.room.timer_task and not self.room.timer_task.done():
+                    self.room.timer_task.cancel()
+            else:
+                await self.room.broadcast_state()
 
-    async def broadcast_state(self):
-        state = self.room.get_state()
-        await self.channel_layer.group_send(
-            self.group_name,
-            {"type": "room.message", "payload": state},
-        )
-
-    async def room_message(self, event):
-        await self.send(text_data=json.dumps(event["payload"]))

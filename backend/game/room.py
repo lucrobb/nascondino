@@ -4,8 +4,10 @@ from .vision import Vision
 from .constants import ROUND_DURATION
 
 from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
 import asyncio
+
+#Rooms own all data inside a lobby, handling all group broadcasting and async states relative to the whole lobby
+#Functions are called by the websocket consumer messages, handling all game logic relevant for the entire lobby
 
 class Room:
     def __init__(self, room_code: str, obstacles: dict) -> None:
@@ -17,22 +19,36 @@ class Room:
         self.status = "waiting"
         self.timer_task: asyncio.Task | None = None
 
+    #Handle websocket broadcasting from within the room, don't depend on consumer connection
     async def broadcast(self, payload: dict):
+        #Gets channel layer from Django settings, can broadcast like the consumer class
         channel_layer = get_channel_layer()
         await channel_layer.group_send(
             self.group_name,
             {"type": "room.message", "payload": payload}
         )
 
-    def start_round_timer(self):
+    async def broadcast_state(self):
+        state = {
+            "type": "state_update",
+            "players": [p.to_dict() for p in self.players.values()]
+        }
+        await self.broadcast(state)
+
+    async def start_round_timer(self):
         await asyncio.sleep(ROUND_DURATION)
+        await self.end_game()
 
-    def add_player(self, player: Player):
-        self.players[player.id] = player
-
-    def remove_player(self, player_id: str):
-        self.players.pop(player_id, None)
-        self.found.discard(player_id)
+    async def end_game(self):
+        if self.status == "ended":
+            return
+        self.status = "ended"
+        if self.timer_task and not self.timer_task.done():
+            self.timer_task.cancel()
+        await self.broadcast({
+            "type": "game_over",
+            "winner": "hunters" if self.hunters_won() else "hiders",
+        })
 
     def start_game(self):
         player_ids = list(self.players.keys())
@@ -43,6 +59,15 @@ class Room:
             player.is_hunter = pid in hunter_ids
 
         self.status = "in_progress"
+        self.timer_task = asyncio.create_task(self.start_round_timer())
+
+
+    def add_player(self, player: Player):
+        self.players[player.id] = player
+
+    def remove_player(self, player_id: str):
+        self.players.pop(player_id, None)
+        self.found.discard(player_id)
 
     def hunters_won(self) -> bool:
         hider_ids = [pid for pid, player in self.players.items() if not player.is_hunter]
@@ -69,8 +94,4 @@ class Room:
             return True
         return False
 
-    def get_state(self) -> dict:
-        return {
-            "type": "state_update",
-            "players": [p.to_dict() for p in self.players.values()]
-        }
+    

@@ -12,7 +12,6 @@ class Vision:
         y: float, 
         z: float, 
         obstacles: list[Obstacle], 
-        players: list[Player],
     ):
         self.x = x
         self.y = y
@@ -26,7 +25,6 @@ class Vision:
         self.max_distance = constants.MAX_VIEW_DISTANCE
 
         self.obstacles = obstacles
-        self.players = players
 
     def relative_angle(self, angle: float, facing: float) -> float:
         #Construct tan like normal, keep range in [-180, 180]
@@ -130,7 +128,15 @@ class Vision:
         return fragments 
         
         
-    def visible_players(self) -> set:
+    def is_player_visible(self, target: Player) -> bool:
+        #Check if the target player is visible to the hunter 
+
+        target_dist = math.hypot(
+            target.position.x - self.x, target.position.y - self.y, target.position.z - self.z
+        )
+        if target_dist > self.max_distance:
+            return False
+
         obstacles = []
         for obstacle in self.obstacles:
             if not obstacle.blocks_vision:
@@ -144,7 +150,7 @@ class Vision:
             #Distance to the closest point of the obstacle
             dist = math.hypot(dx, dy, dz)
             if dist <= self.max_distance:
-                obstacles.append((dist, "obstacle", obstacle))
+                obstacles.append((dist, obstacle))
 
         players = []
         for player in self.players:
@@ -152,35 +158,36 @@ class Vision:
             if dist <= self.max_distance:
                 players.append((dist, "player", player))
 
-        #We sort in order of distance, because we cannot consider more distant obstacles as such for closer players
-        events = sorted(obstacles + players, key=lambda e: e[0])
+        #We sort in order of distance, because we cannot consider more distant obstacles as such for the target player
+        obstacles.sort(key=lambda o: o[0])
 
         #left and right horizontal angle extremities, bottom and top vertical angle extremities, is obstacle
         regions = [(-self.hor_fov / 2, self.hor_fov / 2, -self.ver_fov / 2, self.ver_fov / 2, False)] 
-        new_regions = []
-        found = set()
+        dx, dy, dz = target.position.x - self.x, target.position.y - self.y, target.position.z - self.z
+        hor_angle = self.relative_angle(math.atan2(dz, dx), self.hor_facing)
+        ver_angle = self.relative_angle(math.atan2(dy, math.hypot(dx, dz)), self.ver_facing)
 
-        for dist, kind, obj in events:
-            if kind == "obstacle":
-                obstacle  = self.angle_range_from(obj)
-                for region in regions:
-                    #we add all of the split regions touched by the obstacle
-                    new_regions += self.split_region(region, obstacle)
-                #the new regions become the main ones used to evaluate player visibility
-                regions = new_regions
-                new_regions = []
-                
-            else:
-                dx, dy, dz = obj.position.x - self.x, obj.position.y - self.y, obj.position.z - self.z
-                hor_angle = self.relative_angle(math.atan2(dz, dx), self.hor_facing)
-                ver_angle = self.relative_angle(math.atan2(dy, math.hypot(dx, dz)), self.ver_facing)
+        for dist, obstacle in obstacles:
+            if dist >= target_dist:
+                #The target is closer, the obstacle can't be blocking it
+                break
 
-                for h_start, h_end, v_start, v_end, is_obstacle in regions:
-                    if is_obstacle:
-                        continue
+            #The angle spans from the current position
+            angle_box = self.angle_range_from(obstacle)
+            new_regions = []
+            for region in regions:
+                #Split the regions into obstructed and visible fragments
+                new_regions += self.split_region(region, angle_box)
+            regions = new_regions
 
-                    if h_start <= hor_angle <= h_end and v_start <= ver_angle <= v_end:
-                        found.add(obj.id)
+        for h_start, h_end, v_start, v_end, is_obstacle in regions:
+            if is_obstacle:
+                continue
 
-        return found
+            #Target finds itself within the limits of a visible region
+            if h_start <= hor_angle <= h_end and v_start <= ver_angle <= v_end:
+                return True
+
+        return False
+
 
