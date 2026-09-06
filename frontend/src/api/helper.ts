@@ -1,0 +1,36 @@
+
+const API_BASE = "http://localhost:8000/api";
+
+type HTTPMethod = "GET" | "POST" | "DELETE" | "PATCH";
+
+export class ApiError extends Error { //Error already built into JS, we add status to it
+    status: number;
+    constructor(message: string, status: number) {
+        super(message);
+        this.status = status;
+    }
+}
+interface ApiErrorResponse {
+    error?: string;
+}
+
+export async function apiCall<TBody, TResponse>(url: string, method: HTTPMethod, body: TBody): Promise<TResponse> {
+    const res = await fetch(`${API_BASE}/${url}`, {
+        method,
+        headers: { "Content-Type": "application/json"},
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+
+    if (!res.ok) {
+        let message = `Richiesta fallita (${res.status})`;
+        try {
+            const data: ApiErrorResponse = await res.json();
+            message = data.error ?? message;
+        } catch {
+
+        }
+        throw new ApiError(message, res.status); //throw instead of return signals an error (try, catch)
+    }
+
+    return res.json();
+}
