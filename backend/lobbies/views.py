@@ -11,14 +11,14 @@ def generate_room_code():
     return ''.join(random.choices(string.ascii_uppercase, k=8))
 
 @api_view(["POST"])
-def create_lobby(self, request):
+def create_lobby(request):
     serializer = LobbySerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     lobby = serializer.save()
     return Response(LobbySerializer(lobby).data, status=http_status.HTTP_201_CREATED)
 
 @api_view(["GET"])
-def get_lobby(self, request, room_code):
+def get_lobby(room_code):
     try:
         lobby = Lobby.objects.get(room_code=room_code)
     except Lobby.DoesNotExist:

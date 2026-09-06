@@ -1,22 +1,15 @@
 
-interface Vector3 {
+export interface Vector3 {
     x: number;
     y: number;
     z: number;
 }
-interface FacingAngles {
+export interface FacingAngles {
     horizontal: number;
     vertical: number
 }
 
-interface Cell {
-    position: Vector3;
-    blocksVision: boolean;
-    blocksMovement: boolean;
-    variant: "wall" | "tree" | "hole" | "empty";
-}
-
-interface Obstacle {
+export interface Obstacle {
     position: Vector3
     width: number
     height: number
@@ -26,7 +19,7 @@ interface Obstacle {
     blocksMovement: boolean
 }
 
-interface Player {
+export interface Player {
     position: Vector3;
     facing: FacingAngles;
     isHunter: boolean;
@@ -36,17 +29,17 @@ interface Player {
     name: string;
 }
 
-interface Lobby {
+export interface Lobby {
     obstacles: Obstacle[];
 }
 
-interface LobbyResponse {
-    cells: Cell[];
+export interface LobbyResponse {
+    obstacles: Obstacle[];
     roomCode: string;
-    status: "waiting" | "in progress" | "ended";
+    status: "waiting" | "in_progress" | "ended";
 }
 
-type ServerMessage = 
+export type ServerMessage = 
     | { type: "error", message: string }
     | { type: "state_update"; players: Player[] }
     | { type: "player_found"; playerId: string }
@@ -55,7 +48,7 @@ type ServerMessage =
     | { type: "capture_result"; targetId: string; success: boolean }
 
 
-type ClientMessage = 
+export type ClientMessage = 
     | { type: "move"; position: Vector3; facing: FacingAngles }
     | { type: "join"; player: Player}
     | { type: "start_game" }

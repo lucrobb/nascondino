@@ -4,5 +4,5 @@ from .models import Lobby
 class LobbySerializer(serializers.ModelSerializer):
     class Meta:
         model = Lobby
-        fields = ["room_code", "status", "created_at", "obstacles"]
-        read_only_fields = ["created_at"]
+        fields = ["obstacles"]
+        read_only_fields = ["room_code", "status", "created_at"]
