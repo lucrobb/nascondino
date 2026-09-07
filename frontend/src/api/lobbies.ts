@@ -1,24 +1,19 @@
-import type { LobbyResponse } from '../types';
-import type { Obstacle } from '../types';
-import { apiCall, ApiError } from './helper';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
+import type { Lobby, Obstacle, Vector3 } from '../types';
+import { apiCall } from './helper';
 
-interface CreateLobbyProps {
-    obstacles: Obstacle[];
-    onLoadingChange: (loading: boolean) => void;
+//I return the bare api calls, because error handling is within the components
+export async function createLobby(obstacles: Obstacle[], spawnPosition: Vector3): Promise<Lobby> {
+    return apiCall<{ obstacles: Obstacle[], spawnPosition: Vector3 }, Lobby> (
+        "lobbies/", "POST", { obstacles, spawnPosition }
+    );
 }
-export async function createLobby({ obstacles, onLoadingChange }: CreateLobbyProps): Promise<string | null> {
-    onLoadingChange(true);
-    try{
-        const lobby = await apiCall<{ obstacles: Obstacle[] }, LobbyResponse> (
-            "lobbies/", "POST", { obstacles }
-        );
-        return lobby.roomCode;
-    } catch (err) {
-        toast.error(err instanceof ApiError ? err.message : "Qualcosa è andato storto");
-        return null;
-    } finally {
-        onLoadingChange(false);
-    }
-}
+
+export async function getLobby(roomCode: string): Promise<Lobby> {
+    return apiCall<undefined, Lobby>(
+        `lobbies/${roomCode}/`,
+        "GET",
+        undefined
+    );
+} 
+
+

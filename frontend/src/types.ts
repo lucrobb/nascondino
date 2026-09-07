@@ -31,12 +31,9 @@ export interface Player {
 
 export interface Lobby {
     obstacles: Obstacle[];
-}
-
-export interface LobbyResponse {
-    obstacles: Obstacle[];
     roomCode: string;
     status: "waiting" | "in_progress" | "ended";
+    spawnPosition: Vector3;
 }
 
 export type ServerMessage = 

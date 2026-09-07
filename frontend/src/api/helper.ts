@@ -22,12 +22,12 @@ export async function apiCall<TBody, TResponse>(url: string, method: HTTPMethod,
     });
 
     if (!res.ok) {
-        let message = `Richiesta fallita (${res.status})`;
+        let message: string;
         try {
             const data: ApiErrorResponse = await res.json();
-            message = data.error ?? message;
+            message = data.error ?? `Errore del server (${res.status})`;
         } catch {
-
+            message = `Errore del server (${res.status})`;
         }
         throw new ApiError(message, res.status); //throw instead of return signals an error (try, catch)
     }

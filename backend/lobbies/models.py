@@ -20,6 +20,7 @@ class Lobby(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     obstacles = models.JSONField(default=list)
+    spawn_position = models.JSONField()
 
     def __str__(self):
         return self.room_code
