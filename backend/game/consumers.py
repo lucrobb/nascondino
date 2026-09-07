@@ -5,10 +5,8 @@ from channels.db import database_sync_to_async
 
 from .room import Room
 from .types import Obstacle, Player, Position, FacingAngles
-from ..lobbies.models import Lobby
-from .constants import ROUND_DURATION
+from lobbies.models import Lobby
 
-import asyncio
 
 rooms: dict[str, Room] = {}
 

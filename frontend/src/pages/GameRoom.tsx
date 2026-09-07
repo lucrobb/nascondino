@@ -20,10 +20,6 @@ export default function GameRoom() {
             setLobby(data);
             setPosition(data.spawnPosition);
         } catch (err) {
-            console.log("ERROR:", err);
-            console.log("INSTANCE:", err instanceof ApiError);
-            console.log("MESSAGE:", err instanceof Error ? err.message : err);
-
             toast.error(err instanceof ApiError ? err.message : "Errore di rete");
             navigate("/");
         } finally {
@@ -38,29 +34,32 @@ export default function GameRoom() {
         }
 
         fetchLobby(roomCode);
-        if (lobby) {
-            const ws = new WebSocket(`ws://localhost:8000/ws/lobby/${roomCode}`)
+        
+        const ws = new WebSocket(`ws://localhost:8000/ws/lobby/${roomCode}/`);
 
-            ws.onopen = () => {
-                console.log("Websocket connected");
-            };
+        ws.onopen = () => {
+            console.log("Websocket connected");
+        };
 
-            ws.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                console.log("Received:", data);
-            }
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            console.log("Received:", data);
+        }
 
-            ws.onerror = (error) => {
-                console.error("Websocket error:", error);
-            }
+        ws.onerror = (error) => {
+            console.error("Websocket error:", error);
+        }
 
-            ws.onclose = () => {
-                console.log("Websocket disconnected");
-            }
+        ws.onclose = () => {
+            console.log("Websocket disconnected");
+        }
+
+        return () => {
+            ws.close();
         }
     }, [roomCode])
 
     return (
-        <></>
+        <></> 
     )
 }
