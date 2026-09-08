@@ -15,7 +15,6 @@ class Room:
         self.group_name = f"lobby_{self.room_code}"
         self.players: dict[str, Player] = {}
         self.obstacles: list[Obstacle] = [Obstacle(obstacle) for obstacle in obstacles]
-        self.found: set[str] = set()
         self.status = "waiting"
         self.timer_task: asyncio.Task | None = None
 
@@ -31,7 +30,8 @@ class Room:
     async def broadcast_state(self):
         state = {
             "type": "state_update",
-            "players": [p.to_dict() for p in self.players.values()]
+            "status": self.status,
+            "players": {pid: p.to_dict() for pid, p in self.players.items()}
         }
         await self.broadcast(state)
 
@@ -67,7 +67,6 @@ class Room:
 
     def remove_player(self, player_id: str):
         self.players.pop(player_id, None)
-        self.found.discard(player_id)
 
     def hunters_won(self) -> bool:
         hider_ids = [pid for pid, player in self.players.items() if not player.is_hunter]
@@ -90,7 +89,7 @@ class Room:
         )
 
         if vision.is_player_visible(target):
-            self.found.add(target.id)
+            self.players.get(target_id).is_found = True
             return True
         return False
 

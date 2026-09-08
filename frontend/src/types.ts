@@ -25,9 +25,9 @@ export interface Player {
     isHunter: boolean;
     isFound: boolean;
 
-    id: string;
     name: string;
 }
+export type Players = Record<string, Player>;
 
 export interface Lobby {
     obstacles: Obstacle[];
@@ -38,11 +38,10 @@ export interface Lobby {
 
 export type ServerMessage = 
     | { type: "error", message: string }
-    | { type: "state_update"; players: Player[] }
-    | { type: "player_found"; playerId: string }
+    | { type: "state_update"; players: Players; status: string }
     | { type: "assigned_id"; playerId: string } 
-    | { type: "game_over"; winner: "seekers" | "hiders" }
-    | { type: "capture_result"; targetId: string; success: boolean }
+    | { type: "game_over"; winner: "hunters" | "hiders" }
+    | { type: "capture_result"; success: boolean }
 
 
 export type ClientMessage = 

@@ -53,7 +53,6 @@ class Player:
             vertical=player["facing"]["vertical"]
         )
 
-        self.id = player["id"]
         self.name = player["name"]
 
         self.is_hunter = player["isHunter"]
@@ -61,7 +60,6 @@ class Player:
 
     def to_dict(self) -> dict:
         return {
-            "id": self.id,
             "name": self.name,
             "position": self.position.to_dict(),
             "facing": self.facing.to_dict(),

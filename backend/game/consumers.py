@@ -48,6 +48,9 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         except Lobby.DoesNotExist:
             return None
 
+    async def room_message(self, event):
+        await self.send(text_data=json.dumps(event["payload"]))
+
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -55,7 +58,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
         if msg_type == "join":
             player_data = data["player"]
-            player_data["id"] = self.player_id  # server-assigned id, don't trust client's
             self.room.add_player(Player(player_data))
 
             await self.room.broadcast_state()
@@ -79,7 +81,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         elif msg_type == "capture_attempt":
             success = self.room.attempt_capture(self.player_id, data["targetId"])
             await self.send(text_data=json.dumps({
-                "type": "capture_result", "targetId": data["targetId"], "success": success
+                "type": "capture_result", "success": success
             }))
 
             if success:
