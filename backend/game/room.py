@@ -62,8 +62,8 @@ class Room:
         self.timer_task = asyncio.create_task(self.start_round_timer())
 
 
-    def add_player(self, player: Player):
-        self.players[player.id] = player
+    def add_player(self, player_id: str, player: Player):
+        self.players[player_id] = player
 
     def remove_player(self, player_id: str):
         self.players.pop(player_id, None)

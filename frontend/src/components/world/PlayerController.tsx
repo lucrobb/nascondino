@@ -1,0 +1,126 @@
+import type { FacingAngles, Vector3, Movement } from '../../types';
+import { useThree, useFrame } from "@react-three/fiber"
+import * as THREE from "three";
+import { useEffect, useRef } from 'react';
+
+interface PlayerControllerProps {
+    facing: React.RefObject<FacingAngles | null>;
+    position: React.RefObject<Vector3 | null>;
+    groundRef: React.RefObject<THREE.Mesh | null>;
+    onReadyChange: (ready: boolean) => void;
+    onMove: (position: Vector3, facing: FacingAngles) => void;
+}
+
+
+export function PlayerController({ facing, position, groundRef, onReadyChange, onMove }: PlayerControllerProps): null {
+    const { camera } = useThree();
+    const raycaster = new THREE.Raycaster();
+
+    const MOVE_SPEED: number = 5;
+    const PLAYER_HEIGHT: number = 2;
+
+    const timeSinceLastSend = useRef<number>(0);
+    const SEND_INTERVAL: number = 1 / 15;
+
+    const moveState = useRef<Movement>({
+        forward: false,
+        backward: false,
+        left: false,
+        right: false
+    })
+
+    function getFacing(): FacingAngles {
+        const forward = new THREE.Vector3();
+        camera.getWorldDirection(forward);
+        const horizontalDist = Math.hypot(forward.x, forward.z);
+
+        return {
+            horizontal: Math.atan2(forward.z, forward.x),
+            vertical: Math.atan2(forward.y, horizontalDist)
+        };
+    }
+    function getPosition(): Vector3 {
+        return {
+            x: camera.position.x,
+            y: camera.position.y,
+            z: camera.position.z
+        }
+    }
+
+    useEffect(() => {
+        position.current = getPosition();
+        facing.current = getFacing();
+
+        onReadyChange(true);
+
+        //Add key event listeners for movement
+        function onKeyDown(e: KeyboardEvent) {
+            switch (e.code) {
+                case "KeyW": moveState.current.forward = true; break;
+                case "KeyS": moveState.current.backward = true; break;
+                case "KeyA": moveState.current.left = true; break;
+                case "KeyD": moveState.current.right = true; break;
+            }
+        }
+        function onKeyUp(e: KeyboardEvent) {
+            switch (e.code) {
+                case "KeyW": moveState.current.forward = false; break;
+                case "KeyS": moveState.current.backward = false; break;
+                case "KeyA": moveState.current.left = false; break;
+                case "KeyD": moveState.current.right = false; break;
+            }
+        }
+        window.addEventListener("keydown", onKeyDown);
+        window.addEventListener("keyup", onKeyUp);
+        return () => {
+            window.removeEventListener("keydown", onKeyDown);
+            window.removeEventListener("keyup", onKeyUp);
+        };
+    }, []);
+
+    useFrame((_, delta) => {
+        const { forward, backward, left, right} = moveState.current;
+
+        const direction = new THREE.Vector3();
+        camera.getWorldDirection(direction);
+        direction.y = 0 //movement doesn't depend on y
+        direction.normalize();
+
+        const strafe = new THREE.Vector3();
+        strafe.crossVectors(camera.up, direction).normalize() //Direction perpendicular to facing 
+        
+        //Vector operations to construct the move vector to add to position
+        const move = new THREE.Vector3();
+        if (forward) move.add(direction);
+        if (backward) move.sub(direction);
+        if(left) move.add(strafe);
+        if (right) move.sub(strafe);
+
+        if (move.lengthSq() > 0) {
+            move.normalize().multiplyScalar(MOVE_SPEED * delta);
+            camera.position.add(move);
+        }
+
+        //To calculate y position we use a raycast to find the y value of the ground underneath
+        raycaster.set(
+            //Starting position directly above the player
+            new THREE.Vector3(camera.position.x, camera.position.y + 10, camera.position.z),
+            new THREE.Vector3(0, -1, 0) //Looking straight down
+        )
+        const hits = raycaster.intersectObjects(groundRef.current ? [groundRef.current] : [], true);
+        if (hits.length > 0) {
+            camera.position.y = hits[0].point.y + PLAYER_HEIGHT;
+        }
+
+        position.current = getPosition();
+        facing.current = getFacing();
+
+        timeSinceLastSend.current += delta;
+        if (timeSinceLastSend.current >= SEND_INTERVAL) {
+            timeSinceLastSend.current = 0;
+            onMove(position.current, facing.current);
+        }
+    });
+
+    return null;
+}

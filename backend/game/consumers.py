@@ -58,7 +58,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
         if msg_type == "join":
             player_data = data["player"]
-            self.room.add_player(Player(player_data))
+            self.room.add_player(self.player_id, Player(player_data))
 
             await self.room.broadcast_state()
 

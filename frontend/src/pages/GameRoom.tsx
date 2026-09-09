@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router';
 import { useEffect, useState, useRef } from 'react';
-import type { Vector3, Lobby, ServerMessage, FacingAngles, Player, Players } from '../types';
+import type { Vector3, Lobby, ServerMessage, FacingAngles, Player } from '../types';
 import { getLobby } from '../api/lobbies';
 import { toast } from 'sonner';
 import { ApiError } from '../api/helper';
@@ -14,7 +14,15 @@ import {
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Canvas } from "@react-three/fiber";
-import { PlayerController } from '../components/PlayerController';
+import { PointerLockControls } from "@react-three/drei";
+import { Mesh } from "three";
+
+import { PlayerController } from '../components/world/PlayerController';
+import { Lights } from '../components/world/Lights';
+import { Ground } from '../components/world/Ground';
+import { Obstacles } from '../components/world/Obstacles';
+import { Players } from '../components/world/Players';
+
 
 export default function GameRoom() {
     const { roomCode } = useParams();
@@ -25,6 +33,8 @@ export default function GameRoom() {
 
     const position = useRef<Vector3 | null>(null);
     const facing = useRef<FacingAngles | null>(null);
+    const groundRef = useRef<Mesh | null>(null);
+
     const [playerReady, setPlayerReady] = useState<boolean>(false);
 
     const [name, setName] = useState<string | null>(() => sessionStorage.getItem("playerName"));
@@ -34,8 +44,7 @@ export default function GameRoom() {
     const [isFound, setIsFound] = useState<boolean>(false);
     const playerId = useRef<string | null>(null);
 
-    const [players, setPlayers] = useState<Players>({});
-    const [status, setStatus] = useState<string>("waiting");
+    const [players, setPlayers] = useState<Record<string, Player>>({});
     const socketRef = useRef<WebSocket | null>(null); //We use a reference because it doesn't trigger rendering on change
 
     async function fetchLobby(code: string): Promise<void> {
@@ -77,10 +86,16 @@ export default function GameRoom() {
         sessionStorage.setItem("playerName", newName);
     }
 
+    function move(pos: Vector3, fac: FacingAngles): void {
+        if (!socketRef.current) return;
+        socketRef.current.send(JSON.stringify({
+            type: "move", position: pos, facing: fac
+        }))
+    }
+
 
     useEffect(() => {
         if (!roomCode || !name || !playerReady) {
-            navigate("/");
             return;
         }
         
@@ -116,7 +131,14 @@ export default function GameRoom() {
                     break;
                 
                 case "state_update":
-                    setStatus(data.status);
+                    setLobby(lobby => {
+                        if (!lobby) return lobby;
+
+                        return {
+                            ...lobby,
+                            status: data.status
+                        } 
+                    });
                     setPlayers(data.players);
                     break;
 
@@ -127,7 +149,14 @@ export default function GameRoom() {
                     break;
 
                 case "game_over":
-                    setStatus("ended");
+                    setLobby(lobby => {
+                        if (!lobby) return lobby;
+
+                        return {
+                            ...lobby,
+                            status: "ended"
+                        }
+                    });
                     toast(data.winner === "hunters" ? "I cacciatori vincono" : "I nascosti vincono!")
                     break;
             }
@@ -139,6 +168,7 @@ export default function GameRoom() {
 
         ws.onclose = () => {
             console.log("Websocket disconnected");
+            sessionStorage.removeItem("playerId");
         }
 
         //close when roomCode changes
@@ -162,7 +192,7 @@ export default function GameRoom() {
         <div className="min-h-screen w-screen">
             <Dialog open={!name}>
                 <DialogContent>
-                    <DialogHeader>
+                    <DialogHeader className="uppercase tracking-wide">
                         <DialogTitle>Unisciti alla lobby</DialogTitle>
                         <DialogDescription>
                             Inserisci il nome per unirti alla lobby.
@@ -195,7 +225,10 @@ export default function GameRoom() {
                 </DialogContent>
             </Dialog>
 
-            <div>
+            <div className="w-full h-screen relative">
+                <div className="pointer-events-none fixed inset-0 flex items-center justify-center z-10">
+                    <div className="w-3 h-3 rounded-full bg-primary" />
+                </div>
                 {(!lobby || loading) && (<div>Carica...</div>)}
                 {(lobby && !loading) && (
                     <Canvas
@@ -210,11 +243,18 @@ export default function GameRoom() {
                         far: 1000,
                     }}
                 >
+                    <PointerLockControls />
                     <PlayerController
                         facing={facing}
                         position={position}
+                        groundRef={groundRef}
                         onReadyChange={setPlayerReady}
+                        onMove={move}
                     />
+                    <Lights />
+                    <Ground ref={groundRef}/>
+                    <Obstacles obstacles={lobby.obstacles} />
+                    <Players players={players}/>
                 </Canvas>
                 )}
             </div>

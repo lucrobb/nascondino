@@ -23,6 +23,7 @@ export default function Home() {
             <div className="flex flex-col items-center gap-6">
                 <div className="flex flex-row items-center gap-2">
                     <Input
+                        className="uppercase"
                         value={roomCode}
                         onChange={(e) => setRoomCode(e.target.value)}
                         placeholder="Inserisci codice"

@@ -8,6 +8,12 @@ export interface FacingAngles {
     horizontal: number;
     vertical: number
 }
+export interface Movement {
+    forward: boolean;
+    backward: boolean;
+    left: boolean;
+    right: boolean;
+}
 
 export interface Obstacle {
     position: Vector3
@@ -27,18 +33,19 @@ export interface Player {
 
     name: string;
 }
-export type Players = Record<string, Player>;
+
+export type StatusType = "waiting" | "in_progress" | "ended";
 
 export interface Lobby {
     obstacles: Obstacle[];
     roomCode: string;
-    status: "waiting" | "in_progress" | "ended";
+    status: StatusType;
     spawnPosition: Vector3;
 }
 
 export type ServerMessage = 
     | { type: "error", message: string }
-    | { type: "state_update"; players: Players; status: string }
+    | { type: "state_update"; players: Record<string, Player>; status: StatusType }
     | { type: "assigned_id"; playerId: string } 
     | { type: "game_over"; winner: "hunters" | "hiders" }
     | { type: "capture_result"; success: boolean }

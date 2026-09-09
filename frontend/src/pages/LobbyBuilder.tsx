@@ -34,7 +34,7 @@ export default function LobbyBuilder() {
     useEffect(() => {
         const testObstacles = [
             {
-                position: { x: 1, y: 1, z: 1 },
+                position: { x: 10, y: 1, z: 1 },
                 width: 1,
                 height: 1,
                 depth: 1,
@@ -45,7 +45,7 @@ export default function LobbyBuilder() {
 
         const testSpawnPosition = {
             x: 2,
-            y: 2,
+            y: 0,
             z: 2,
         };
 
