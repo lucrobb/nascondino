@@ -253,7 +253,7 @@ export default function GameRoom() {
                 </div>
                 {(!lobby || loading) && (<div>Carica...</div>)}
                 {(lobby && !loading && lobby.status === "waiting" && isCreator) && (
-                    <div className="fixed top-10 right-10">
+                    <div className="fixed top-10 right-10 z-20">
                         <Button onClick={startGame}>
                             Inizia partita
                         </Button>
