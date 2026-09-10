@@ -14,6 +14,7 @@ class Room:
         self.room_code = room_code
         self.group_name = f"lobby_{self.room_code}"
         self.players: dict[str, Player] = {}
+        self.creator_id: str | None = None
         self.obstacles: list[Obstacle] = [Obstacle(obstacle) for obstacle in obstacles]
         self.status = "waiting"
         self.timer_task: asyncio.Task | None = None
@@ -63,6 +64,9 @@ class Room:
 
 
     def add_player(self, player_id: str, player: Player):
+        if not self.players:
+            #user is creator of lobby
+            self.creator_id = player_id
         self.players[player_id] = player
 
     def remove_player(self, player_id: str):

@@ -46,7 +46,8 @@ export interface Lobby {
 export type ServerMessage = 
     | { type: "error", message: string }
     | { type: "state_update"; players: Record<string, Player>; status: StatusType }
-    | { type: "assigned_id"; playerId: string } 
+    | { type: "assigned_id"; playerId: string; } 
+    | { type: "is_creator"; isCreator: boolean }
     | { type: "game_over"; winner: "hunters" | "hiders" }
     | { type: "capture_result"; success: boolean }
 

@@ -37,7 +37,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
         await self.send(text_data=json.dumps({
             "type": "assigned_id",
-            "playerId": self.player_id
+            "playerId": self.player_id,
         }))
 
     @database_sync_to_async
@@ -59,10 +59,16 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         if msg_type == "join":
             player_data = data["player"]
             self.room.add_player(self.player_id, Player(player_data))
+            await self.send(text_data=json.dumps({
+                "type": "is_creator",
+                "isCreator": self.player_id == self.room.creator_id,
+            }))
 
             await self.room.broadcast_state()
 
         elif msg_type == "start_game":
+            if self.player_id != self.room.creator_id: 
+                return
             self.room.start_game()
             await self.room.broadcast_state()
 

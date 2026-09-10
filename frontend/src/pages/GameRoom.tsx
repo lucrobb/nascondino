@@ -43,6 +43,7 @@ export default function GameRoom() {
 
     const [isHunter, setIsHunter] = useState<boolean>(false);
     const [isFound, setIsFound] = useState<boolean>(false);
+    const [isCreator, setIsCreator] = useState<boolean>(false);
     const playerId = useRef<string | null>(null);
 
     const [players, setPlayers] = useState<Record<string, Player>>({});
@@ -131,6 +132,10 @@ export default function GameRoom() {
                     playerId.current = data.playerId;
                     break;
                 
+                case "is_creator":
+                    setIsCreator(data.isCreator);
+                    break;
+
                 case "state_update":
                     setLobby(lobby => {
                         if (!lobby) return lobby;
@@ -190,10 +195,17 @@ export default function GameRoom() {
     }, [players, playerId])
 
     function captureTarget(targetId: string): void {
-        if (socketRef.current) {
+        if (socketRef.current && lobby && lobby.status === "in_progress") {
             socketRef.current.send(JSON.stringify({
                 type: "capture_attempt",
                 targetId
+            }))
+        }
+    }
+    function startGame() {
+        if (socketRef.current) {
+            socketRef.current.send(JSON.stringify({
+                type: "start_game"
             }))
         }
     }
@@ -240,6 +252,13 @@ export default function GameRoom() {
                     <div className="w-3 h-3 rounded-full bg-primary" />
                 </div>
                 {(!lobby || loading) && (<div>Carica...</div>)}
+                {(lobby && !loading && lobby.status === "waiting" && isCreator) && (
+                    <div className="fixed top-10 right-10">
+                        <Button onClick={startGame}>
+                            Inizia partita
+                        </Button>
+                    </div>
+                )}
                 {(lobby && !loading) && (
                     <Canvas
                     camera={{
@@ -252,11 +271,12 @@ export default function GameRoom() {
                         near: 0.1,
                         far: 1000,
                     }}
-                >
+                    >
                     <PointerLockControls />
                     <PlayerController
                         facing={facing}
                         position={position}
+                        obstacles={lobby.obstacles}
                         groundRef={groundRef}
                         onReadyChange={setPlayerReady}
                         onMove={move}

@@ -1,4 +1,4 @@
-import type { FacingAngles, Vector3, Movement } from '../../types';
+import type { FacingAngles, Vector3, Movement, Obstacle } from '../../types';
 import { useThree, useFrame } from "@react-three/fiber"
 import * as THREE from "three";
 import { useEffect, useRef } from 'react';
@@ -6,15 +6,16 @@ import { useEffect, useRef } from 'react';
 interface PlayerControllerProps {
     facing: React.RefObject<FacingAngles | null>;
     position: React.RefObject<Vector3 | null>;
+    obstacles: Obstacle[];
     groundRef: React.RefObject<THREE.Mesh | null>;
     onReadyChange: (ready: boolean) => void;
     onMove: (position: Vector3, facing: FacingAngles) => void;
 }
 
 
-export function PlayerController({ facing, position, groundRef, onReadyChange, onMove }: PlayerControllerProps): null {
+export function PlayerController({ facing, position, obstacles, groundRef, onReadyChange, onMove }: PlayerControllerProps): null {
     const { camera } = useThree();
-    const raycaster = new THREE.Raycaster();
+    const raycaster = useRef<THREE.Raycaster>(new THREE.Raycaster());
 
     const MOVE_SPEED: number = 5;
     const PLAYER_HEIGHT: number = 2;
@@ -45,6 +46,23 @@ export function PlayerController({ facing, position, groundRef, onReadyChange, o
             y: camera.position.y,
             z: camera.position.z
         }
+    }
+
+    function wouldCollide(nextPos: THREE.Vector3): boolean {
+        for (const obstacle of obstacles) {
+            if (!obstacle.blocksMovement) continue;
+            const halfW = obstacle.width / 2;
+            const halfD = obstacle.depth / 2;
+            if (
+                nextPos.x > obstacle.position.x - halfW &&
+                nextPos.x < obstacle.position.x + halfW &&
+                nextPos.z > obstacle.position.z - halfD &&
+                nextPos.z < obstacle.position.z + halfD
+            ) {
+                return true;
+            }
+        }
+        return false;
     }
 
     useEffect(() => {
@@ -80,6 +98,7 @@ export function PlayerController({ facing, position, groundRef, onReadyChange, o
 
     useFrame((_, delta) => {
         const { forward, backward, left, right} = moveState.current;
+        timeSinceLastSend.current += delta;
 
         const direction = new THREE.Vector3();
         camera.getWorldDirection(direction);
@@ -98,16 +117,29 @@ export function PlayerController({ facing, position, groundRef, onReadyChange, o
 
         if (move.lengthSq() > 0) {
             move.normalize().multiplyScalar(MOVE_SPEED * delta);
-            camera.position.add(move);
+            
+            //check x-axis collision
+            const nextX = camera.position.clone();
+            nextX.x += move.x;
+            if (!wouldCollide(nextX)) {
+                camera.position.x = nextX.x;
+            }
+
+            //check z-axis collision
+            const nextZ = camera.position.clone();
+            nextZ.z += move.z;
+            if (!wouldCollide(nextZ)) {
+                camera.position.z = nextZ.z
+            }
         }
 
         //To calculate y position we use a raycast to find the y value of the ground underneath
-        raycaster.set(
+        raycaster.current.set(
             //Starting position directly above the player
             new THREE.Vector3(camera.position.x, camera.position.y + 10, camera.position.z),
             new THREE.Vector3(0, -1, 0) //Looking straight down
         )
-        const hits = raycaster.intersectObjects(groundRef.current ? [groundRef.current] : [], true);
+        const hits = raycaster.current.intersectObjects(groundRef.current ? [groundRef.current] : [], true);
         if (hits.length > 0) {
             camera.position.y = hits[0].point.y + PLAYER_HEIGHT;
         }
@@ -115,7 +147,6 @@ export function PlayerController({ facing, position, groundRef, onReadyChange, o
         position.current = getPosition();
         facing.current = getFacing();
 
-        timeSinceLastSend.current += delta;
         if (timeSinceLastSend.current >= SEND_INTERVAL) {
             timeSinceLastSend.current = 0;
             onMove(position.current, facing.current);
