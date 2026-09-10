@@ -18,6 +18,7 @@ import { PointerLockControls } from "@react-three/drei";
 import { Mesh } from "three";
 
 import { PlayerController } from '../components/world/PlayerController';
+import { CaptureController } from '../components/world/CaptureController';
 import { Lights } from '../components/world/Lights';
 import { Ground } from '../components/world/Ground';
 import { Obstacles } from '../components/world/Obstacles';
@@ -162,7 +163,7 @@ export default function GameRoom() {
             }
         }
 
-        ws.onerror = (error) => {
+        ws.onerror = () => {
             toast.error("Errore di connessione")
         }
 
@@ -187,6 +188,15 @@ export default function GameRoom() {
         setIsHunter(user.isHunter);
         setIsFound(user.isFound);
     }, [players, playerId])
+
+    function captureTarget(targetId: string): void {
+        if (socketRef.current) {
+            socketRef.current.send(JSON.stringify({
+                type: "capture_attempt",
+                targetId
+            }))
+        }
+    }
 
     return (
         <div className="min-h-screen w-screen">
@@ -251,10 +261,13 @@ export default function GameRoom() {
                         onReadyChange={setPlayerReady}
                         onMove={move}
                     />
+                    <CaptureController
+                        onCapture={captureTarget}
+                    />
                     <Lights />
                     <Ground ref={groundRef}/>
                     <Obstacles obstacles={lobby.obstacles} />
-                    <Players players={players}/>
+                    <Players players={players} pId={playerId.current}/>
                 </Canvas>
                 )}
             </div>

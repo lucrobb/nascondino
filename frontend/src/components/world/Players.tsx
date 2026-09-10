@@ -6,9 +6,10 @@ import { useRef } from 'react';
 
 interface PlayerProps {
     player: Player;
+    playerId: string;
 }
 
-function Player({ player }: PlayerProps) {
+function Player({ player, playerId }: PlayerProps) {
     //playerRef modifies the group mesh directly with its current state
     const playerRef = useRef<Group>(null);
     const currentPosition = useRef<Vector3>(new Vector3());
@@ -42,7 +43,7 @@ function Player({ player }: PlayerProps) {
 
     return (
         <group ref={playerRef}>
-            <mesh position={[0, 2, 0]}>
+            <mesh position={[0, 2, 0]} userData={{ playerId: playerId }}>
                 <sphereGeometry args={[0.5]} />
                 <meshStandardMaterial color={color} />
             </mesh>
@@ -58,13 +59,16 @@ function Player({ player }: PlayerProps) {
 
 interface PlayersProps {
     players: Record<string, Player>
+    pId: string | null;
 }
 
-export function Players({ players }: PlayersProps) {
+export function Players({ players, pId }: PlayersProps) {
     return (
         <>
             {Object.entries(players).map(([id, p]) => (
-                <Player key={id} player={p} />
+                id !== pId && (
+                    <Player key={id} player={p} playerId={id}/>
+                )
             ))}
         </>
     )
