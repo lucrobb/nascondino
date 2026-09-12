@@ -34,7 +34,8 @@ export default function GameRoom() {
 
     const position = useRef<Vector3 | null>(null);
     const facing = useRef<FacingAngles | null>(null);
-    const groundRef = useRef<Mesh | null>(null);
+
+    const terrainRef = useRef<Mesh[]>([]);
 
     const [playerReady, setPlayerReady] = useState<boolean>(false);
 
@@ -48,6 +49,12 @@ export default function GameRoom() {
 
     const [players, setPlayers] = useState<Record<string, Player>>({});
     const socketRef = useRef<WebSocket | null>(null); //We use a reference because it doesn't trigger rendering on change
+
+    function registerTerrain(mesh: Mesh | null): void {
+        if (mesh && !terrainRef.current.includes(mesh)) {
+            terrainRef.current.push(mesh);
+        }
+    }
 
     async function fetchLobby(code: string): Promise<void> {
         setLoading(true);
@@ -277,7 +284,7 @@ export default function GameRoom() {
                         facing={facing}
                         position={position}
                         obstacles={lobby.obstacles}
-                        groundRef={groundRef}
+                        groundRef={terrainRef}
                         onReadyChange={setPlayerReady}
                         onMove={move}
                     />
@@ -285,7 +292,7 @@ export default function GameRoom() {
                         onCapture={captureTarget}
                     />
                     <Lights />
-                    <Ground ref={groundRef}/>
+                    <Ground onRegisterRef={registerTerrain} terrain={lobby.terrain}/>
                     <Obstacles obstacles={lobby.obstacles} />
                     <Players players={players} pId={playerId.current}/>
                 </Canvas>

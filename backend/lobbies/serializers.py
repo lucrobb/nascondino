@@ -9,5 +9,5 @@ class LobbySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Lobby
-        fields = ["obstacles", "spawnPosition", "roomCode", "status", "createdAt"]
+        fields = ["obstacles", "terrain", "spawnPosition", "roomCode", "status", "createdAt"]
         read_only_fields = ["status"]

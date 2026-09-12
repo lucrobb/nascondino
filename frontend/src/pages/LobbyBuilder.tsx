@@ -12,15 +12,10 @@ export default function LobbyBuilder() {
     const [spawnPosition, setSpawnPosition] = useState<Vector3 | null>(null)
     const [loading, setLoading] = useState<boolean>(false);
 
-    async function handleBuild(testObstacles: Obstacle[], testSpawnPosition: Vector3) {
-        if (!testSpawnPosition) {
-            toast.error("Scegli una posizione per spawnare!");
-            return;
-        }
-
+    async function handleBuild(): Promise<void> {
         setLoading(true);
         try {
-            const data: Lobby = await createLobby(testObstacles, testSpawnPosition);
+            const data: Lobby = await createLobby();
             const roomCode = data.roomCode;
             navigate(`/lobby/${roomCode}/`);
         } catch (err) {
@@ -32,28 +27,8 @@ export default function LobbyBuilder() {
 
     //For testing purposes i will automatically create a lobby on initialization
     useEffect(() => {
-        const testObstacles = [
-            {
-                position: { x: 10, y: 1, z: 1 },
-                width: 1,
-                height: 1,
-                depth: 1,
-                blocksVision: true,
-                blocksMovement: true,
-            },
-        ];
-
-        const testSpawnPosition = {
-            x: 2,
-            y: 0,
-            z: 2,
-        };
-
-        setObstacles(testObstacles);
-        setSpawnPosition(testSpawnPosition);
-
-        handleBuild(testObstacles, testSpawnPosition);
-    }, []);
+        handleBuild();
+    }, [])
 
     return (
         <></>

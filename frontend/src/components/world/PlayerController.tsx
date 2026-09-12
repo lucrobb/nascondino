@@ -7,7 +7,7 @@ interface PlayerControllerProps {
     facing: React.RefObject<FacingAngles | null>;
     position: React.RefObject<Vector3 | null>;
     obstacles: Obstacle[];
-    groundRef: React.RefObject<THREE.Mesh | null>;
+    groundRef: React.RefObject<THREE.Mesh[]>;
     onReadyChange: (ready: boolean) => void;
     onMove: (position: Vector3, facing: FacingAngles) => void;
 }
@@ -139,7 +139,7 @@ export function PlayerController({ facing, position, obstacles, groundRef, onRea
             new THREE.Vector3(camera.position.x, camera.position.y + 10, camera.position.z),
             new THREE.Vector3(0, -1, 0) //Looking straight down
         )
-        const hits = raycaster.current.intersectObjects(groundRef.current ? [groundRef.current] : [], true);
+        const hits = raycaster.current.intersectObjects(groundRef.current, true);
         if (hits.length > 0) {
             camera.position.y = hits[0].point.y + PLAYER_HEIGHT;
         }

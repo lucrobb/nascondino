@@ -24,6 +24,13 @@ export interface Obstacle {
     blocksVision: boolean
     blocksMovement: boolean
 }
+export interface Terrain {
+    position: Vector3;
+    rotation: Vector3;
+    width: number,
+    height: number,
+    depth: number
+}
 
 export interface Player {
     position: Vector3;
@@ -38,6 +45,7 @@ export type StatusType = "waiting" | "in_progress" | "ended";
 
 export interface Lobby {
     obstacles: Obstacle[];
+    terrain: Terrain[];
     roomCode: string;
     status: StatusType;
     spawnPosition: Vector3;
