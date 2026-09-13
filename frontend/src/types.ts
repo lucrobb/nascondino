@@ -59,6 +59,7 @@ export type ServerMessage =
     | { type: "game_over"; winner: "hunters" | "hiders" }
     | { type: "capture_result"; success: boolean }
     | { type: "error"; message: string }
+    | { type: "kicked", message: string }
 
 
 export type ClientMessage = 

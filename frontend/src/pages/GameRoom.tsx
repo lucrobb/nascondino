@@ -168,6 +168,11 @@ export default function GameRoom() {
                     setWinner(data["winner"])
                     break;
 
+                case "kicked":
+                    toast.error(data.message);
+                    navigate("/");
+                    break;
+
                 case "error":
                     toast.error(data.message);
                     break;

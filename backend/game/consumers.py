@@ -34,6 +34,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
+        self.room.register_channel(self.player_id, self.channel_name)
 
         await self.send(text_data=json.dumps({
             "type": "assigned_id",
@@ -48,6 +49,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         except Lobby.DoesNotExist:
             return None
 
+    #called by room, allows to be called for each client of the channel
     async def room_message(self, event):
         await self.send(text_data=json.dumps(event["payload"]))
 
@@ -56,6 +58,14 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             "type": "error",
             "message": message
         }))
+
+    #called by room when host kicks this client
+    async def force_close(self):
+        await self.send(text_data=json.dumps({
+            "type": "kicked",
+            "message": "L'host ti ha rimoss* dalla lobby"
+        }))
+        await self.close()
 
 
     async def receive(self, text_data):
@@ -76,7 +86,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             if self.player_id != self.room.creator_id:
                 return
             id = data["id"]
-            self.room.remove_player(id)
+            await self.room.force_disconnect(id)
             await self.room.broadcast_state()
 
         elif msg_type == "start_game":

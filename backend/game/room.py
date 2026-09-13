@@ -14,6 +14,7 @@ class Room:
         self.room_code = room_code
         self.group_name = f"lobby_{self.room_code}"
         self.players: dict[str, Player] = {}
+        self.player_channels: dict[str, str] = {}
         self.creator_id: str | None = None
         self.obstacles: list[Obstacle] = [Obstacle(obstacle) for obstacle in obstacles]
         self.status = "waiting"
@@ -51,6 +52,16 @@ class Room:
             "winner": "hunters" if self.hunters_won() else "hiders",
         })
 
+    async def force_disconnect(self, player_id: str):
+        self.remove_player(player_id)
+        channel_name = self.player_channels.get(player_id)
+        if not channel_name:
+            return
+        channel_layer = get_channel_layer()
+        await channel_layer.send(channel_name, {
+            "type": "force.close"
+        })
+
     def start_game(self):
         player_ids = list(self.players.keys())
         num_hunters = max(1, len(player_ids) // 4)
@@ -62,6 +73,8 @@ class Room:
         self.status = "in_progress"
         self.timer_task = asyncio.create_task(self.start_round_timer())
 
+    def register_channel(self, player_id: str, channel_name: str):
+        self.player_channels[player_id] = channel_name
 
     def add_player(self, player_id: str, player: Player):
         if not self.players:

@@ -7,6 +7,8 @@ export class WebsocketSend {
         this.socketRef = socketRef;
     }
     
+    //We use arrow functions because they capture "this" value, making it possible to pass them down as props to components
+    //while maintaining the information necessary to be derived from the class
     private send = (content: ClientMessage): void => {
         if (this.socketRef.current) {
             this.socketRef.current.send(JSON.stringify(content))
