@@ -51,6 +51,12 @@ class LobbyConsumer(AsyncWebsocketConsumer):
     async def room_message(self, event):
         await self.send(text_data=json.dumps(event["payload"]))
 
+    async def send_error(self, message):
+        await self.send(text_data=json.dumps({
+            "type": "error",
+            "message": message
+        }))
+
 
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -66,6 +72,13 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
             await self.room.broadcast_state()
 
+        elif msg_type == "kick_player":
+            if self.player_id != self.room.creator_id:
+                return
+            id = data["id"]
+            self.room.remove_player(id)
+            await self.room.broadcast_state()
+
         elif msg_type == "start_game":
             if self.player_id != self.room.creator_id: 
                 return
@@ -73,6 +86,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             await self.room.broadcast_state()
 
         elif msg_type == "end_game":
+            if self.player_id != self.room.creator_id:
+                return
             await self.room.end_game()
 
         elif msg_type == "move":

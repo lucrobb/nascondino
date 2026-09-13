@@ -66,8 +66,24 @@ def create_lobby(request):
         "blocksVision": True, "blocksMovement": True},
     ]
 
+    DEFAULT_TERRAIN = [
+        # Ramp up to a raised platform on the east side
+        {"position": {"x": 20, "y": 1.5, "z": 0}, "rotation": {"x": 0, "y": 0, "z": -0.35},
+        "width": 6, "height": 0.4, "depth": 4},
+        # The platform itself, flat, at the top of the ramp
+        {"position": {"x": 16, "y": 3, "z": 0}, "rotation": {"x": 0, "y": 0, "z": 0},
+        "width": 6, "height": 0.4, "depth": 6},
+
+        # A second ramp, different orientation, west side
+        {"position": {"x": -20, "y": 1.5, "z": 5}, "rotation": {"x": 0.35, "y": 0, "z": 0},
+        "width": 4, "height": 0.4, "depth": 6},
+        {"position": {"x": -20, "y": 3, "z": 2}, "rotation": {"x": 0, "y": 0, "z": 0},
+        "width": 4, "height": 0.4, "depth": 4},
+    ]
+
     lobby = Lobby.objects.create(
         obstacles=DEFAULT_OBSTACLES,
+        terrain=DEFAULT_TERRAIN,
         spawn_position=DEFAULT_SPAWN
     )
 

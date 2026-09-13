@@ -2,6 +2,7 @@ import { useParams, useNavigate } from 'react-router';
 import { useEffect, useState, useRef } from 'react';
 import type { Vector3, Lobby, ServerMessage, FacingAngles, Player } from '../types';
 import { getLobby } from '../api/lobbies';
+import { WebsocketSend } from '../api/game';
 import { toast } from 'sonner';
 import { ApiError } from '../api/helper';
 import {
@@ -32,6 +33,10 @@ export default function GameRoom() {
     const [lobby, setLobby] = useState<Lobby | null>(null);
     const [loading, setLoading] = useState<boolean>(false);
 
+    const isWaiting = lobby?.status === "waiting";
+    const isPlaying = lobby?.status === "in_progress";
+    const isEnded = lobby?.status === "ended";
+
     const position = useRef<Vector3 | null>(null);
     const facing = useRef<FacingAngles | null>(null);
 
@@ -48,7 +53,9 @@ export default function GameRoom() {
     const playerId = useRef<string | null>(null);
 
     const [players, setPlayers] = useState<Record<string, Player>>({});
+
     const socketRef = useRef<WebSocket | null>(null); //We use a reference because it doesn't trigger rendering on change
+    const wsSend = new WebsocketSend(socketRef);
 
     function registerTerrain(mesh: Mesh | null): void {
         if (mesh && !terrainRef.current.includes(mesh)) {
@@ -172,6 +179,10 @@ export default function GameRoom() {
                     });
                     toast(data.winner === "hunters" ? "I cacciatori vincono" : "I nascosti vincono!")
                     break;
+
+                case "error":
+                    toast.error(data.message);
+                    break;
             }
         }
 
@@ -201,21 +212,6 @@ export default function GameRoom() {
         setIsFound(user.isFound);
     }, [players, playerId])
 
-    function captureTarget(targetId: string): void {
-        if (socketRef.current && lobby && lobby.status === "in_progress") {
-            socketRef.current.send(JSON.stringify({
-                type: "capture_attempt",
-                targetId
-            }))
-        }
-    }
-    function startGame() {
-        if (socketRef.current) {
-            socketRef.current.send(JSON.stringify({
-                type: "start_game"
-            }))
-        }
-    }
 
     return (
         <div className="min-h-screen w-screen">
@@ -258,14 +254,44 @@ export default function GameRoom() {
                 <div className="pointer-events-none fixed inset-0 flex items-center justify-center z-10">
                     <div className="w-3 h-3 rounded-full bg-primary" />
                 </div>
+
                 {(!lobby || loading) && (<div>Carica...</div>)}
-                {(lobby && !loading && lobby.status === "waiting" && isCreator) && (
+                {(!loading && isWaiting && isCreator) && (
                     <div className="fixed top-10 right-10 z-20">
-                        <Button onClick={startGame}>
+                        <Button onClick={wsSend.startGame}>
                             Inizia partita
                         </Button>
                     </div>
                 )}
+                {!loading && isWaiting && (
+                    <>
+                        <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
+                            <div className="bg-background border-2 px-6 py-2 rounded-md uppercase tracking-wide font-medium">
+                                In attesa che l'host inizi la partita
+                            </div>
+                        </div>
+
+                        <div className="fixed top-6 left-6 z-20 flex flex-col gap-1 bg-background/80 p-3 rounded-md">
+                            {Object.entries(players).map(([id, p]) => (
+                                <div key={id} className="flex items-center gap-2 text-sm">
+                                    <span>{p.name}</span>
+                                    {isCreator && id !== playerId.current && isWaiting && (
+                                        <button onClick={() => wsSend.kickPlayer(id)} className="text-destructive text-xs">✕</button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </>
+                )}
+                {!loading && isFound && (
+                    <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
+                        <div className="bg-destructive text-destructive-foreground px-6 py-2 rounded-md uppercase tracking-wide font-medium">
+                            Sei stat* trovat*
+                        </div>
+                    </div>
+                )}
+
+
                 {(lobby && !loading) && (
                     <Canvas
                     camera={{
@@ -287,9 +313,10 @@ export default function GameRoom() {
                         groundRef={terrainRef}
                         onReadyChange={setPlayerReady}
                         onMove={move}
+                        isFound={isFound}
                     />
                     <CaptureController
-                        onCapture={captureTarget}
+                        onCapture={wsSend.captureTarget}
                     />
                     <Lights />
                     <Ground onRegisterRef={registerTerrain} terrain={lobby.terrain}/>

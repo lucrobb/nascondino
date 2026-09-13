@@ -9,12 +9,14 @@ interface GroundProps {
 
 export function Ground({ onRegisterRef, terrain }: GroundProps) {
     return (
-        <mesh ref={onRegisterRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-            <planeGeometry args={[100, 100]} />
-            <meshStandardMaterial color="#e5e2e2" />
-        </mesh>
-        {terrain.map((t, i) => (
-            <TerrainPiece terrain={t} onRegisterRef={onRegisterRef} />
-        ))}
+        <>
+            <mesh ref={onRegisterRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+                <planeGeometry args={[100, 100]} />
+                <meshStandardMaterial color="#e5e2e2" />
+            </mesh>
+            {terrain.map((t, i) => (
+                <TerrainPiece key={i} terrain={t} onRegisterRef={onRegisterRef} />
+            ))}
+        </>
     );
 }

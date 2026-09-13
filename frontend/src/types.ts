@@ -58,6 +58,7 @@ export type ServerMessage =
     | { type: "is_creator"; isCreator: boolean }
     | { type: "game_over"; winner: "hunters" | "hiders" }
     | { type: "capture_result"; success: boolean }
+    | { type: "error"; message: string }
 
 
 export type ClientMessage = 
@@ -65,6 +66,7 @@ export type ClientMessage =
     | { type: "join"; player: Player}
     | { type: "start_game" }
     | { type: "capture_attempt"; targetId: string }
+    | { type: "kick_player"; id: string }
 
 
 

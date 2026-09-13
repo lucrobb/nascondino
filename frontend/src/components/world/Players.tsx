@@ -62,11 +62,12 @@ interface PlayersProps {
     pId: string | null;
 }
 
+//pId stores the user's own player, so they can't see themself
 export function Players({ players, pId }: PlayersProps) {
     return (
         <>
             {Object.entries(players).map(([id, p]) => (
-                id !== pId && (
+                id !== pId && !p.isFound && (
                     <Player key={id} player={p} playerId={id}/>
                 )
             ))}

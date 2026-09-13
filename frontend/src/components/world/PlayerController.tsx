@@ -10,10 +10,11 @@ interface PlayerControllerProps {
     groundRef: React.RefObject<THREE.Mesh[]>;
     onReadyChange: (ready: boolean) => void;
     onMove: (position: Vector3, facing: FacingAngles) => void;
+    isFound: boolean;
 }
 
 
-export function PlayerController({ facing, position, obstacles, groundRef, onReadyChange, onMove }: PlayerControllerProps): null {
+export function PlayerController({ facing, position, obstacles, groundRef, onReadyChange, onMove, isFound }: PlayerControllerProps): null {
     const { camera } = useThree();
     const raycaster = useRef<THREE.Raycaster>(new THREE.Raycaster());
 
@@ -102,7 +103,10 @@ export function PlayerController({ facing, position, obstacles, groundRef, onRea
 
         const direction = new THREE.Vector3();
         camera.getWorldDirection(direction);
-        direction.y = 0 //movement doesn't depend on y
+        if (!isFound) {
+            direction.y = 0 //movement doesn't depend on y
+            //If player is found they can float around at any y axis point as well
+        }
         direction.normalize();
 
         const strafe = new THREE.Vector3();
@@ -121,14 +125,18 @@ export function PlayerController({ facing, position, obstacles, groundRef, onRea
             //check x-axis collision
             const nextX = camera.position.clone();
             nextX.x += move.x;
-            if (!wouldCollide(nextX)) {
+            if (!wouldCollide(nextX) || isFound) {
                 camera.position.x = nextX.x;
             }
+
+            //next y axis position, only ever calculated if the user is found, otherwise direction.y = 0
+            camera.position.y += move.y;
+            
 
             //check z-axis collision
             const nextZ = camera.position.clone();
             nextZ.z += move.z;
-            if (!wouldCollide(nextZ)) {
+            if (!wouldCollide(nextZ) || isFound) {
                 camera.position.z = nextZ.z
             }
         }
@@ -136,7 +144,7 @@ export function PlayerController({ facing, position, obstacles, groundRef, onRea
         //To calculate y position we use a raycast to find the y value of the ground underneath
         raycaster.current.set(
             //Starting position directly above the player
-            new THREE.Vector3(camera.position.x, camera.position.y + 10, camera.position.z),
+            new THREE.Vector3(camera.position.x, camera.position.y - 1, camera.position.z),
             new THREE.Vector3(0, -1, 0) //Looking straight down
         )
         const hits = raycaster.current.intersectObjects(groundRef.current, true);
