@@ -70,6 +70,7 @@ export function PlayerController({ facing, position, obstacles, groundRef, onRea
         position.current = getPosition();
         facing.current = getFacing();
 
+        //User now has all data necessary to be added to the game room on the backend
         onReadyChange(true);
 
         //Add key event listeners for movement
@@ -142,22 +143,24 @@ export function PlayerController({ facing, position, obstacles, groundRef, onRea
         }
 
         //To calculate y position we use a raycast to find the y value of the ground underneath
-        raycaster.current.set(
-            //Starting position directly above the player
-            new THREE.Vector3(camera.position.x, camera.position.y - 1, camera.position.z),
-            new THREE.Vector3(0, -1, 0) //Looking straight down
-        )
-        const hits = raycaster.current.intersectObjects(groundRef.current, true);
-        if (hits.length > 0) {
-            camera.position.y = hits[0].point.y + PLAYER_HEIGHT;
-        }
+        if (!isFound) {
+            raycaster.current.set(
+                //Starting position directly above the player
+                new THREE.Vector3(camera.position.x, camera.position.y - 1, camera.position.z),
+                new THREE.Vector3(0, -1, 0) //Looking straight down
+            )
+            const hits = raycaster.current.intersectObjects(groundRef.current, true);
+            if (hits.length > 0) {
+                camera.position.y = hits[0].point.y + PLAYER_HEIGHT;
+            }
 
-        position.current = getPosition();
-        facing.current = getFacing();
+            position.current = getPosition();
+            facing.current = getFacing();
 
-        if (timeSinceLastSend.current >= SEND_INTERVAL) {
-            timeSinceLastSend.current = 0;
-            onMove(position.current, facing.current);
+            if (timeSinceLastSend.current >= SEND_INTERVAL) {
+                timeSinceLastSend.current = 0;
+                onMove(position.current, facing.current);
+            }
         }
     });
 

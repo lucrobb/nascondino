@@ -31,16 +31,21 @@ export default function GameRoom() {
     const navigate = useNavigate();
 
     const [lobby, setLobby] = useState<Lobby | null>(null);
-    const [loading, setLoading] = useState<boolean>(false);
 
     const isWaiting = lobby?.status === "waiting";
     const isPlaying = lobby?.status === "in_progress";
     const isEnded = lobby?.status === "ended";
+    const [winner, setWinner] = useState<"hunters" | "hiders" | null>(null);
 
     const position = useRef<Vector3 | null>(null);
     const facing = useRef<FacingAngles | null>(null);
 
     const terrainRef = useRef<Mesh[]>([]);
+    function registerTerrain(mesh: Mesh | null): void {
+        if (mesh && !terrainRef.current.includes(mesh)) {
+            terrainRef.current.push(mesh);
+        }
+    }
 
     const [playerReady, setPlayerReady] = useState<boolean>(false);
 
@@ -54,17 +59,11 @@ export default function GameRoom() {
 
     const [players, setPlayers] = useState<Record<string, Player>>({});
 
-    const socketRef = useRef<WebSocket | null>(null); //We use a reference because it doesn't trigger rendering on change
+    const socketRef = useRef<WebSocket | null>(null); 
+    //Class storing all websocket client messages to send to the server
     const wsSend = new WebsocketSend(socketRef);
 
-    function registerTerrain(mesh: Mesh | null): void {
-        if (mesh && !terrainRef.current.includes(mesh)) {
-            terrainRef.current.push(mesh);
-        }
-    }
-
     async function fetchLobby(code: string): Promise<void> {
-        setLoading(true);
         try {
             const data: Lobby = await getLobby(code);
 
@@ -79,8 +78,6 @@ export default function GameRoom() {
         } catch (err) {
             toast.error(err instanceof ApiError ? err.message : "Errore di rete");
             navigate("/");
-        } finally {
-            setLoading(false);
         }
     }
 
@@ -102,14 +99,8 @@ export default function GameRoom() {
         sessionStorage.setItem("playerName", newName);
     }
 
-    function move(pos: Vector3, fac: FacingAngles): void {
-        if (!socketRef.current) return;
-        socketRef.current.send(JSON.stringify({
-            type: "move", position: pos, facing: fac
-        }))
-    }
 
-
+    //Websocket connection established once user chooses name and enters in lobby (full Player data)
     useEffect(() => {
         if (!roomCode || !name || !playerReady) {
             return;
@@ -126,16 +117,13 @@ export default function GameRoom() {
                 return;
             }
 
-            ws.send(JSON.stringify({
-                type: "join",
-                player: {
-                    position: position.current,
-                    facing: facing.current,
-                    isHunter,
-                    isFound,
-                    name
-                }
-            }))
+            wsSend.join(
+                position.current,
+                facing.current,
+                isHunter,
+                isFound,
+                name
+            )
         };
 
         ws.onmessage = (event) => {
@@ -177,7 +165,7 @@ export default function GameRoom() {
                             status: "ended"
                         }
                     });
-                    toast(data.winner === "hunters" ? "I cacciatori vincono" : "I nascosti vincono!")
+                    setWinner(data["winner"])
                     break;
 
                 case "error":
@@ -201,6 +189,7 @@ export default function GameRoom() {
         }
     }, [roomCode, name, playerReady])
 
+    //Updates player's state based on the new player data incoming from Websocket
     useEffect(() => {
         if (!playerId.current) return;
 
@@ -211,6 +200,7 @@ export default function GameRoom() {
         setIsHunter(user.isHunter);
         setIsFound(user.isFound);
     }, [players, playerId])
+    
 
 
     return (
@@ -255,19 +245,19 @@ export default function GameRoom() {
                     <div className="w-3 h-3 rounded-full bg-primary" />
                 </div>
 
-                {(!lobby || loading) && (<div>Carica...</div>)}
-                {(!loading && isWaiting && isCreator) && (
+                {!lobby && (<div>Carica...</div>)}
+                {isWaiting && isCreator && (
                     <div className="fixed top-10 right-10 z-20">
                         <Button onClick={wsSend.startGame}>
                             Inizia partita
                         </Button>
                     </div>
                 )}
-                {!loading && isWaiting && (
+                {isWaiting && (
                     <>
                         <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
                             <div className="bg-background border-2 px-6 py-2 rounded-md uppercase tracking-wide font-medium">
-                                In attesa che l'host inizi la partita
+                                {isCreator ? "In attesa che inizi la partita" : "In attesa che l'host inizi la partita"}
                             </div>
                         </div>
 
@@ -283,7 +273,23 @@ export default function GameRoom() {
                         </div>
                     </>
                 )}
-                {!loading && isFound && (
+                {isPlaying && !isFound && (
+                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                        <div className={`px-6 py-2 rounded-md uppercase tracking-wide font-medium ${
+                            isHunter ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                        }`}>
+                            {isHunter ? "Cacciatore" : "Nascost*"}
+                        </div>
+                    </div>
+                )}
+                {isEnded && (
+                    <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
+                        <div className="bg-background border-2 px-6 py-2 rounded-md uppercase tracking-wide font-medium">
+                            La partita è finita. Hanno vinto i {winner === "hunters" ? "cacciatori" : "nascosti"}
+                        </div>
+                    </div>
+                )}
+                {isFound && (
                     <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
                         <div className="bg-destructive text-destructive-foreground px-6 py-2 rounded-md uppercase tracking-wide font-medium">
                             Sei stat* trovat*
@@ -292,7 +298,7 @@ export default function GameRoom() {
                 )}
 
 
-                {(lobby && !loading) && (
+                {(lobby) && (
                     <Canvas
                     camera={{
                         position: [
@@ -312,7 +318,7 @@ export default function GameRoom() {
                         obstacles={lobby.obstacles}
                         groundRef={terrainRef}
                         onReadyChange={setPlayerReady}
-                        onMove={move}
+                        onMove={wsSend.move}
                         isFound={isFound}
                     />
                     <CaptureController

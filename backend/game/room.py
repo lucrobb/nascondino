@@ -74,7 +74,8 @@ class Room:
 
     def hunters_won(self) -> bool:
         hiders = [player for player in self.players.values() if not player.is_hunter]
-        return len(hiders) > 0 and all(player.is_found for player in hiders)
+        hunters = [player for player in self.players.values() if player.is_hunter]
+        return (len(hiders) < 0 or all(player.is_found for player in hiders)) and len(hunters) > 0
 
     def attempt_capture(self, hunter_id: str, target_id: str) -> bool:
         hunter = self.players.get(hunter_id)

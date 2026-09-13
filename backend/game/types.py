@@ -41,6 +41,40 @@ class Obstacle:
             "blocksMovement": self.blocks_movement
         }
 
+class Terrain:
+    def __init__(self, terrain: dict):
+        self.position = Position(
+            x=terrain["position"]["x"],
+            y=terrain["position"]["y"],
+            z=terrain["position"]["z"]
+        )
+        self.rotation = Position(
+            x=terrain["rotation"]["x"],
+            y=terrain["rotation"]["y"],
+            z=terrain["rotation"]["z"]
+        )
+
+        self.width = terrain["width"]
+        self.height = terrain["height"]
+        self.depth = terrain["depth"]
+
+    def to_dict(self) -> dict:
+        return {
+            "position": {
+                "x": self.position.x,
+                "y": self.position.x,
+                "z": self.position.z
+            },
+            "rotation": {
+                "x": self.rotation.x,
+                "y": self.rotation.y,
+                "z": self.rotation.z
+            },
+            "width": self.width,
+            "height": self.height,
+            "depth": self.depth
+        }
+
 class Player:
     def __init__(self, player: dict):
         self.position = Position(
