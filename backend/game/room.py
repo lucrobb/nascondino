@@ -67,6 +67,9 @@ class Room:
         })
 
     def start_game(self):
+        if self.status == "in_progress":
+            return
+        
         player_ids = list(self.players.keys())
         num_hunters = max(1, len(player_ids) // 4)
         hunter_ids = set(random.sample(player_ids, num_hunters))

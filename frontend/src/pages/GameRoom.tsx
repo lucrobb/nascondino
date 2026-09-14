@@ -59,6 +59,7 @@ export default function GameRoom() {
 
     const [players, setPlayers] = useState<Record<string, Player>>({});
     const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+    const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
     const socketRef = useRef<WebSocket | null>(null); 
     //Class storing all websocket client messages to send to the server
@@ -210,6 +211,17 @@ export default function GameRoom() {
         setIsHunter(user.isHunter);
         setIsFound(user.isFound);
     }, [players, playerId])
+
+    //Handles menu state based on pointer lock
+    useEffect(() => {
+        function onPointerLockChange() {
+            if (!document.pointerLockElement) {
+                setMenuOpen(true); // pointer lock was exited (Esc, or programmatically) — show menu
+            }
+        }
+        document.addEventListener("pointerlockchange", onPointerLockChange);
+        return () => document.removeEventListener("pointerlockchange", onPointerLockChange);
+    }, []);
     
 
 
@@ -249,103 +261,117 @@ export default function GameRoom() {
                     </form>
                 </DialogContent>
             </Dialog>
-
-            <div className="w-full h-screen relative">
-                <div className="pointer-events-none fixed inset-0 flex items-center justify-center z-10">
-                    <div className="w-3 h-3 rounded-full bg-primary" />
-                </div>
-
-                {!lobby && (<div>Carica...</div>)}
-                {isWaiting && isCreator && (
-                    <div className="fixed top-10 right-10 z-20">
-                        <Button onClick={wsSend.startGame}>
-                            Inizia partita
-                        </Button>
+            {name && (
+                <div className="w-full h-screen relative">
+                    <div className="pointer-events-none fixed inset-0 flex items-center justify-center z-10">
+                        <div className="w-3 h-3 rounded-full bg-primary" />
                     </div>
-                )}
-                {isWaiting && (
-                    <>
-                        <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
-                            <div className="bg-background border-2 px-6 py-2 rounded-md uppercase tracking-wide font-medium">
-                                {isCreator ? "In attesa che inizi la partita" : "In attesa che l'host inizi la partita"}
+
+                    {!lobby && (<div>Carica...</div>)}
+                    {menuOpen && (
+                        <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Menu</DialogTitle>
+                                </DialogHeader>
+                                <div className="flex flex-col gap-2">
+                                    <Button variant="ghost" onClick={() => setMenuOpen(false)}>Riprendi</Button>
+                                    <Button variant="destructive" onClick={() => navigate("/")}>Esci dalla partita</Button>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    )}
+                    {isWaiting && isCreator && (
+                        <div className="fixed top-10 right-10 z-20">
+                            <Button onClick={wsSend.startGame}>
+                                Inizia partita
+                            </Button>
+                        </div>
+                    )}
+                    {isWaiting && (
+                        <>
+                            <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
+                                <div className="bg-background border-2 px-6 py-2 rounded-md uppercase tracking-wide font-medium">
+                                    {isCreator ? "In attesa che inizi la partita" : "In attesa che l'host inizi la partita"}
+                                </div>
+                            </div>
+
+                            <div className="fixed top-6 left-6 z-20 flex flex-col gap-1 bg-background/80 p-3 rounded-md">
+                                {Object.entries(players).map(([id, p]) => (
+                                    <div key={id} className="flex items-center gap-2 text-sm">
+                                        <span>{p.name}</span>
+                                        {isCreator && id !== playerId.current && isWaiting && (
+                                            <button onClick={() => wsSend.kickPlayer(id)} className="text-destructive text-xs">✕</button>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </>
+                    )}
+                    {isPlaying && !isFound && (
+                        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+                            <div className={`px-6 py-2 rounded-md uppercase tracking-wide font-medium ${
+                                isHunter ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                            }`}>
+                                {isHunter ? "Cacciatore" : "Nascost*"}
                             </div>
                         </div>
-
-                        <div className="fixed top-6 left-6 z-20 flex flex-col gap-1 bg-background/80 p-3 rounded-md">
-                            {Object.entries(players).map(([id, p]) => (
-                                <div key={id} className="flex items-center gap-2 text-sm">
-                                    <span>{p.name}</span>
-                                    {isCreator && id !== playerId.current && isWaiting && (
-                                        <button onClick={() => wsSend.kickPlayer(id)} className="text-destructive text-xs">✕</button>
-                                    )}
-                                </div>
-                            ))}
+                    )}
+                    {isPlaying && timeRemaining !== null && (
+                        <div className="fixed top-6 right-6 z-20 text-2xl font-mono">
+                            {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, "0")}
                         </div>
-                    </>
-                )}
-                {isPlaying && !isFound && (
-                    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
-                        <div className={`px-6 py-2 rounded-md uppercase tracking-wide font-medium ${
-                            isHunter ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-                        }`}>
-                            {isHunter ? "Cacciatore" : "Nascost*"}
+                    )}
+                    {isEnded && (
+                        <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
+                            <div className="bg-background border-2 px-6 py-2 rounded-md uppercase tracking-wide font-medium">
+                                La partita è finita. Hanno vinto i {winner === "hunters" ? "cacciatori" : "nascosti"}
+                            </div>
                         </div>
-                    </div>
-                )}
-                {isPlaying && timeRemaining !== null && (
-                    <div className="fixed top-6 right-6 z-20 text-2xl font-mono">
-                        {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, "0")}
-                    </div>
-                )}
-                {isEnded && (
-                    <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
-                        <div className="bg-background border-2 px-6 py-2 rounded-md uppercase tracking-wide font-medium">
-                            La partita è finita. Hanno vinto i {winner === "hunters" ? "cacciatori" : "nascosti"}
+                    )}
+                    {isFound && (
+                        <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
+                            <div className="bg-destructive text-destructive-foreground px-6 py-2 rounded-md uppercase tracking-wide font-medium">
+                                Sei stat* trovat*
+                            </div>
                         </div>
-                    </div>
-                )}
-                {isFound && (
-                    <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
-                        <div className="bg-destructive text-destructive-foreground px-6 py-2 rounded-md uppercase tracking-wide font-medium">
-                            Sei stat* trovat*
-                        </div>
-                    </div>
-                )}
+                    )}
 
 
-                {(lobby) && (
-                    <Canvas
-                    camera={{
-                        position: [
-                            lobby.spawnPosition.x,
-                            lobby.spawnPosition.y,
-                            lobby.spawnPosition.z
-                        ],
-                        fov: 75,
-                        near: 0.1,
-                        far: 1000,
-                    }}
-                    >
-                    <PointerLockControls />
-                    <PlayerController
-                        facing={facing}
-                        position={position}
-                        obstacles={lobby.obstacles}
-                        groundRef={terrainRef}
-                        onReadyChange={setPlayerReady}
-                        onMove={wsSend.move}
-                        isFound={isFound}
-                    />
-                    <CaptureController
-                        onCapture={wsSend.captureTarget}
-                    />
-                    <Lights />
-                    <Ground onRegisterRef={registerTerrain} terrain={lobby.terrain}/>
-                    <Obstacles obstacles={lobby.obstacles} />
-                    <Players players={players} pId={playerId.current}/>
-                </Canvas>
-                )}
-            </div>
+                    {(lobby) && (
+                        <Canvas
+                        camera={{
+                            position: [
+                                lobby.spawnPosition.x,
+                                lobby.spawnPosition.y,
+                                lobby.spawnPosition.z
+                            ],
+                            fov: 75,
+                            near: 0.1,
+                            far: 1000,
+                        }}
+                        >
+                        <PointerLockControls />
+                        <PlayerController
+                            facing={facing}
+                            position={position}
+                            obstacles={lobby.obstacles}
+                            groundRef={terrainRef}
+                            onReadyChange={setPlayerReady}
+                            onMove={wsSend.move}
+                            isFound={isFound}
+                        />
+                        <CaptureController
+                            onCapture={wsSend.captureTarget}
+                        />
+                        <Lights />
+                        <Ground onRegisterRef={registerTerrain} terrain={lobby.terrain}/>
+                        <Obstacles obstacles={lobby.obstacles} />
+                        <Players players={players} pId={playerId.current}/>
+                    </Canvas>
+                    )}
+                </div>
+            )}
         </div>
     );
 }
