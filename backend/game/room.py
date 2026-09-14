@@ -38,7 +38,11 @@ class Room:
         await self.broadcast(state)
 
     async def start_round_timer(self):
-        await asyncio.sleep(ROUND_DURATION)
+        remaining = ROUND_DURATION
+        while remaining > 0:
+            await self.broadcast({"type": "time_update", "remaining": remaining})
+            await asyncio.sleep(1)
+            remaining -= 1
         await self.end_game()
 
     async def end_game(self):

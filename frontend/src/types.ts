@@ -60,6 +60,7 @@ export type ServerMessage =
     | { type: "capture_result"; success: boolean }
     | { type: "error"; message: string }
     | { type: "kicked", message: string }
+    | { type: "time_update", remaining: number}
 
 
 export type ClientMessage = 

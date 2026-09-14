@@ -58,6 +58,7 @@ export default function GameRoom() {
     const playerId = useRef<string | null>(null);
 
     const [players, setPlayers] = useState<Record<string, Player>>({});
+    const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 
     const socketRef = useRef<WebSocket | null>(null); 
     //Class storing all websocket client messages to send to the server
@@ -148,6 +149,10 @@ export default function GameRoom() {
                         } 
                     });
                     setPlayers(data.players);
+                    break;
+
+                case "time_update":
+                    setTimeRemaining(data["remaining"]);
                     break;
 
                 case "capture_result":
@@ -285,6 +290,11 @@ export default function GameRoom() {
                         }`}>
                             {isHunter ? "Cacciatore" : "Nascost*"}
                         </div>
+                    </div>
+                )}
+                {isPlaying && timeRemaining !== null && (
+                    <div className="fixed top-6 right-6 z-20 text-2xl font-mono">
+                        {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, "0")}
                     </div>
                 )}
                 {isEnded && (
