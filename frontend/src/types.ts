@@ -67,6 +67,7 @@ export type ClientMessage =
     | { type: "move"; position: Vector3; facing: FacingAngles }
     | { type: "join"; player: Player}
     | { type: "start_game" }
+    | { type: "end_game" }
     | { type: "capture_attempt"; targetId: string }
     | { type: "kick_player"; id: string }
 

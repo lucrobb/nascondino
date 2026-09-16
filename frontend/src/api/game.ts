@@ -45,6 +45,11 @@ export class WebsocketSend {
             type: "start_game"
         })
     }
+    public endGame = (): void => {
+        this.send({
+            type: "end_game"
+        })
+    }
     public kickPlayer = (id: string): void => {
         this.send({
             type: "kick_player",

@@ -24,6 +24,7 @@ import { Lights } from '../components/world/Lights';
 import { Ground } from '../components/world/Ground';
 import { Obstacles } from '../components/world/Obstacles';
 import { Players } from '../components/world/Players';
+import { Kbd } from '@/components/ui/kbd';
 
 
 export default function GameRoom() {
@@ -214,13 +215,16 @@ export default function GameRoom() {
 
     //Handles menu state based on pointer lock
     useEffect(() => {
-        function onPointerLockChange() {
-            if (!document.pointerLockElement) {
+        function onKeyDown(e: KeyboardEvent): void {
+            if ((!document.pointerLockElement && e.code === "Escape") || e.code === "Tab") {
+                document.exitPointerLock();
                 setMenuOpen(true); // pointer lock was exited (Esc, or programmatically) — show menu
+            } else if (e.code === "Enter") {
+                wsSend.startGame();
             }
         }
-        document.addEventListener("pointerlockchange", onPointerLockChange);
-        return () => document.removeEventListener("pointerlockchange", onPointerLockChange);
+        document.addEventListener("keydown", onKeyDown);
+        return () => document.removeEventListener("keydown", onKeyDown);
     }, []);
     
 
@@ -271,11 +275,42 @@ export default function GameRoom() {
                     {menuOpen && (
                         <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
                             <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Menu</DialogTitle>
-                                </DialogHeader>
-                                <div className="flex flex-col gap-2">
-                                    <Button variant="ghost" onClick={() => setMenuOpen(false)}>Riprendi</Button>
+                                <div className="flex flex-col gap-4">
+                                    <Button onClick={() => setMenuOpen(false)}>Riprendi</Button>
+
+                                    {isCreator && (
+                                        <div className="border-t pt-4 flex flex-col gap-2">
+                                            <span className="text-sm uppercase tracking-wide text-muted-foreground">
+                                                Controlli host
+                                            </span>
+
+                                            {isWaiting && (
+                                                <Button onClick={wsSend.startGame}>
+                                                    Inizia partita
+                                                </Button>
+                                            )}
+                                            {isPlaying && (
+                                                <Button variant="destructive" onClick={wsSend.endGame}>
+                                                    Termina partita
+                                                </Button>
+                                            )}
+
+                                            <div className="flex flex-col gap-1">
+                                                {Object.entries(players).map(([id, p]) => (
+                                                        <div key={id} className="flex items-center justify-between">
+                                                            <span>{p.name}</span>
+                                                            <button
+                                                                onClick={() => wsSend.kickPlayer(id)}
+                                                                className="text-destructive text-xs"
+                                                            >
+                                                                Espelli
+                                                            </button>
+                                                        </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <Button variant="destructive" onClick={() => navigate("/")}>Esci dalla partita</Button>
                                 </div>
                             </DialogContent>
@@ -285,28 +320,16 @@ export default function GameRoom() {
                         <div className="fixed top-10 right-10 z-20">
                             <Button onClick={wsSend.startGame}>
                                 Inizia partita
+                                <Kbd className="ml-2 bg-transparent text-current opacity-70">⏎</Kbd>
                             </Button>
                         </div>
                     )}
                     {isWaiting && (
-                        <>
-                            <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
-                                <div className="bg-background border-2 px-6 py-2 rounded-md uppercase tracking-wide font-medium">
-                                    {isCreator ? "In attesa che inizi la partita" : "In attesa che l'host inizi la partita"}
-                                </div>
+                        <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
+                            <div className="bg-background border-2 px-6 py-2 rounded-md uppercase tracking-wide font-medium">
+                                {isCreator ? "In attesa che inizi la partita" : "In attesa che l'host inizi la partita"}
                             </div>
-
-                            <div className="fixed top-6 left-6 z-20 flex flex-col gap-1 bg-background/80 p-3 rounded-md">
-                                {Object.entries(players).map(([id, p]) => (
-                                    <div key={id} className="flex items-center gap-2 text-sm">
-                                        <span>{p.name}</span>
-                                        {isCreator && id !== playerId.current && isWaiting && (
-                                            <button onClick={() => wsSend.kickPlayer(id)} className="text-destructive text-xs">✕</button>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </>
+                        </div>
                     )}
                     {isPlaying && !isFound && (
                         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
