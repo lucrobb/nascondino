@@ -1,5 +1,5 @@
-import type { Obstacle, Lobby, Vector3 } from '../types';
-import { useState, useEffect } from 'react';
+import type { Lobby } from '../types';
+import { useEffect } from 'react';
 import { createLobby } from '../api/lobbies';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
