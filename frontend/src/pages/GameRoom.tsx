@@ -46,6 +46,8 @@ export default function GameRoom() {
     const { roomCode } = useParams();
     const navigate = useNavigate();
     const WS_URL = import.meta.env.WS_URL;
+    console.log("API URL:", import.meta.env.VITE_API_URL);
+    console.log("WS URL:", import.meta.env.VITE_WS_URL);
 
     const [lobby, setLobby] = useState<Lobby | null>(null);
 
