@@ -12,6 +12,21 @@ import {
     DialogHeader,
     DialogTitle,
 } from "../components/ui/dialog";
+import {
+    Tabs,
+    TabsList,
+    TabsContent,
+    TabsTrigger
+} from "../components/ui/tabs";
+import{
+    Table,
+    TableCaption,
+    TableHeader,
+    TableRow,
+    TableHead,
+    TableCell,
+    TableBody
+} from "../components/ui/table";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Canvas } from "@react-three/fiber";
@@ -219,13 +234,15 @@ export default function GameRoom() {
             if ((!document.pointerLockElement && e.code === "Escape") || e.code === "Tab") {
                 document.exitPointerLock();
                 setMenuOpen(true); // pointer lock was exited (Esc, or programmatically) — show menu
-            } else if (e.code === "Enter") {
+            } else if (e.code === "Enter" && isCreator && !isPlaying) {
                 wsSend.startGame();
+            } else if (e.code === "Backspace" && isEnded) {
+                navigate("/");
             }
         }
         document.addEventListener("keydown", onKeyDown);
         return () => document.removeEventListener("keydown", onKeyDown);
-    }, []);
+    }, [isCreator, isPlaying, isEnded]);
     
 
 
@@ -274,56 +291,92 @@ export default function GameRoom() {
                     {!lobby && (<div>Carica...</div>)}
                     {menuOpen && (
                         <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
-                            <DialogContent>
-                                <div className="flex flex-col gap-4">
-                                    <Button onClick={() => setMenuOpen(false)}>Riprendi</Button>
+                            <DialogContent
+                                className="pointer-events-auto"
+                                onPointerDown={(e) => e.stopPropagation()}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <Tabs defaultValue="menu">
+                                    <TabsList className="mb-4">
+                                        <TabsTrigger value="menu" className="uppercase tracking-wide">Menu</TabsTrigger>
+                                        {isCreator && <TabsTrigger value="players" className="uppercase tracking-wide">Giocatori</TabsTrigger>}
+                                    </TabsList>
+                                    <TabsContent value="menu">
+                                        <div className="flex flex-col gap-4">
+                                            <Button onClick={() => setMenuOpen(false)}>Riprendi</Button>
 
-                                    {isCreator && (
-                                        <div className="border-t pt-4 flex flex-col gap-2">
-                                            <span className="text-sm uppercase tracking-wide text-muted-foreground">
-                                                Controlli host
-                                            </span>
+                                            {isCreator && (
+                                                <div className="border-t pt-4 flex flex-col gap-2">
+                                                    <span className="text-sm uppercase tracking-wide text-muted-foreground">
+                                                        Controlli host
+                                                    </span>
 
-                                            {isWaiting && (
-                                                <Button onClick={wsSend.startGame}>
-                                                    Inizia partita
-                                                </Button>
+                                                    {!isPlaying && (
+                                                        <Button onClick={() => {
+                                                            wsSend.startGame();
+                                                            setMenuOpen(false);
+                                                        }}>
+                                                            Inizia partita
+                                                        </Button>
+                                                    )}
+                                                    {isPlaying && (
+                                                        <Button variant="destructive" onClick={wsSend.endGame}>
+                                                            Termina partita
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             )}
-                                            {isPlaying && (
-                                                <Button variant="destructive" onClick={wsSend.endGame}>
-                                                    Termina partita
-                                                </Button>
-                                            )}
 
-                                            <div className="flex flex-col gap-1">
-                                                {Object.entries(players).map(([id, p]) => (
-                                                        <div key={id} className="flex items-center justify-between">
-                                                            <span>{p.name}</span>
-                                                            <button
-                                                                onClick={() => wsSend.kickPlayer(id)}
-                                                                className="text-destructive text-xs"
-                                                            >
-                                                                Espelli
-                                                            </button>
-                                                        </div>
-                                                ))}
-                                            </div>
+                                            <Button variant="destructive" onClick={() => navigate("/")}>Esci dalla partita</Button>
                                         </div>
+                                    </TabsContent>
+                                    {isCreator && (
+                                        <TabsContent value="players">
+                                            <Table>
+                                                <TableCaption>{Object.entries(players).length > 1 ? "Giocatori nella lobby" : "La lobby è vuota"}</TableCaption>
+                                                <TableHeader>
+                                                    <TableRow>
+                                                        <TableHead className="uppercase tracking-wide">Nome</TableHead>
+                                                        <TableHead className="uppercase tracking-wide">Cacciatore</TableHead>
+                                                        <TableHead className="uppercase tracking-wide">Trovat*</TableHead>
+                                                        <TableHead></TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {Object.entries(players).map(([id, p]) => id !== playerId.current && (
+                                                        <TableRow key={id}>
+                                                            <TableCell>{p.name}</TableCell>
+                                                            <TableCell>{p.isHunter ? "SÌ" : "NO"}</TableCell>
+                                                            <TableCell>{p.isFound ? "SÌ" : "NO"}</TableCell>
+                                                            <TableCell align="right">
+                                                                <Button variant="destructive" className="text-xs h-fit p-2" onClick={() => wsSend.kickPlayer(id)}>Espelli</Button>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </TabsContent>
                                     )}
-
-                                    <Button variant="destructive" onClick={() => navigate("/")}>Esci dalla partita</Button>
-                                </div>
+                                </Tabs>
+                                
                             </DialogContent>
                         </Dialog>
                     )}
-                    {isWaiting && isCreator && (
-                        <div className="fixed top-10 right-10 z-20">
+
+                    <div className="fixed top-10 right-10 z-20 flex flex-col gap-2">
+                        {isCreator && !isPlaying && (
                             <Button onClick={wsSend.startGame}>
                                 Inizia partita
-                                <Kbd className="ml-2 bg-transparent text-current opacity-70">⏎</Kbd>
+                                <Kbd className="ml-2 bg-transparent text-current">⏎</Kbd>
                             </Button>
-                        </div>
-                    )}
+                        )}
+                        {isEnded && (
+                            <Button onClick={() => navigate("/")}>
+                                Esci
+                                <Kbd className="ml-2 bg-transparent text-current">⌫</Kbd>
+                            </Button>
+                        )}
+                    </div>
                     {isWaiting && (
                         <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
                             <div className="bg-background border-2 px-6 py-2 rounded-md uppercase tracking-wide font-medium">
