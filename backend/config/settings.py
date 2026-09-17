@@ -80,7 +80,10 @@ WSGI_APPLICATION = 'config.wsgi.application'
 
 ASGI_APPLICATION = 'config.asgi.application'
 
-CORS_ALLOWED_ORIGINS = ['http://localhost:5173']
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:5173',
+    "https://nascondino-9hnv.onrender.com",
+]
 
 #Using Redis for deployment
 CHANNEL_LAYERS = {
