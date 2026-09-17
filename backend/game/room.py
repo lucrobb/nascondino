@@ -93,9 +93,13 @@ class Room:
         self.players.pop(player_id, None)
 
     def hunters_won(self) -> bool:
-        hiders = [player for player in self.players.values() if not player.is_hunter]
-        hunters = [player for player in self.players.values() if player.is_hunter]
-        return (len(hiders) < 0 or all(player.is_found for player in hiders)) and len(hunters) > 0
+        alive, hunters = 0, 0
+        for player in self.players:
+            if player.is_hunter: hunters += 1
+            else: 
+                if not player.is_found: alive += 1
+
+        return alive == 0 and hunters > 0
 
     def attempt_capture(self, hunter_id: str, target_id: str) -> bool:
         hunter = self.players.get(hunter_id)

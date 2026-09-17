@@ -45,6 +45,7 @@ import { Kbd } from '@/components/ui/kbd';
 export default function GameRoom() {
     const { roomCode } = useParams();
     const navigate = useNavigate();
+    const WS_URL = import.meta.env.WS_URL;
 
     const [lobby, setLobby] = useState<Lobby | null>(null);
 
@@ -124,7 +125,7 @@ export default function GameRoom() {
             return;
         }
         
-        const ws = new WebSocket(`ws://localhost:8000/ws/lobby/${roomCode}/`);
+        const ws = new WebSocket(`WS_URL/${roomCode}/`);
         socketRef.current = ws;
 
         ws.onopen = () => {

@@ -1,5 +1,5 @@
 
-const API_BASE = "http://localhost:8000/api";
+const API_BASE = import.meta.env.API_URL;
 
 type HTTPMethod = "GET" | "POST" | "DELETE" | "PATCH";
 
