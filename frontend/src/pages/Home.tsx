@@ -9,6 +9,8 @@ import { Button } from '../components/ui/button';
 export default function Home() {
     const [roomCode, setRoomCode] = useState<string>('');
     const navigate = useNavigate();
+    console.log("API URL:", import.meta.env.VITE_API_URL);
+    console.log("WS URL:", import.meta.env.VITE_WS_URL);
 
     function handleJoin() {
         const code = roomCode.trim().toUpperCase();
