@@ -125,7 +125,7 @@ export default function GameRoom() {
             return;
         }
         
-        const ws = new WebSocket(`WS_URL/${roomCode}/`);
+        const ws = new WebSocket(`${WS_URL}/${roomCode}/`);
         socketRef.current = ws;
 
         ws.onopen = () => {
