@@ -43,11 +43,11 @@ function Player({ player, playerId }: PlayerProps) {
 
     return (
         <group ref={playerRef}>
-            <mesh position={[0, -0.25, 0]} userData={{ playerId: playerId }}>
+            <mesh position={[0, -1.5, 0]} userData={{ playerId: playerId }}>
                 <sphereGeometry args={[0.25]} />
                 <meshStandardMaterial color={color} />
             </mesh>
-            <mesh position={[0, -0.75, 0]}>
+            <mesh position={[0, -2, 0]}>
                 <boxGeometry args={[0.5, 0.5, 0.5]} />
                 <meshStandardMaterial color={color} />
             </mesh>
