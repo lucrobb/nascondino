@@ -45,7 +45,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         await self.accept()
         self.room.register_channel(self.player_id, self.channel_name)
 
-        if self.room.status == "in_progress":
+        if self.room.status == "in_progress" and self.player_id not in self.room.players:
             await self.send(text_data=json.dumps({
                 "type": "kicked",
                 "message": "La partita è già iniziata."

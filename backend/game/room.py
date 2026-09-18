@@ -32,7 +32,7 @@ class Room:
         state = {
             "type": "state_update",
             "status": self.status,
-            "players": {pid: p.to_dict() for pid, p in self.players.items() if not p.disconnect_task}
+            "players": {pid: p.to_dict() for pid, p in self.players.items() if p.connected}
         }
         await self.broadcast(state)
 
@@ -82,6 +82,9 @@ class Room:
             return
         
         player_ids = list(self.players.keys())
+        if not player_ids:
+            return
+        
         num_hunters = max(1, len(player_ids) // 4)
         hunter_ids = set(random.sample(player_ids, num_hunters))
 
@@ -101,6 +104,7 @@ class Room:
             if existing_player.disconnect_task:
                 existing_player.disconnect_task.cancel()
                 existing_player.disconnect_task = None
+                existing_player.connected = False
             return
         
         if not self.players:
