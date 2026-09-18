@@ -104,7 +104,7 @@ class Room:
             if existing_player.disconnect_task:
                 existing_player.disconnect_task.cancel()
                 existing_player.disconnect_task = None
-                existing_player.connected = False
+                existing_player.connected = True
             return
         
         if not self.players:
