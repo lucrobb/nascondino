@@ -86,14 +86,6 @@ export default function GameRoom() {
     async function fetchLobby(code: string): Promise<void> {
         try {
             const data: Lobby = await getLobby(code);
-
-            //We only allow to join if lobby is waiting, so isFound and isHunter values are correct
-            if (data.status !== "waiting") {
-                toast.error("La partita è già iniziata.");
-                navigate("/");
-                return;
-            }
-
             setLobby(data);
         } catch (err) {
             toast.error(err instanceof ApiError ? err.message : "Errore di rete");
