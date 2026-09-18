@@ -28,6 +28,13 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         if self.room_code not in rooms:
             rooms[self.room_code] = Room(self.room_code, obstacles)
         self.room = rooms[self.room_code]
+        if self.room.status == "in_progress":
+            await self.send(text_data=json.dumps({
+                "type": "kicked",
+                "message": "La partita è già iniziata."
+            }))
+            await self.close()
+            return
 
         self.group_name = f"lobby_{self.room_code}"
         self.player_id = str(uuid.uuid4())
