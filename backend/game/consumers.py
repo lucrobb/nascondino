@@ -29,7 +29,10 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             rooms[self.room_code] = Room(self.room_code, obstacles)
         self.room = rooms[self.room_code]
         if self.room.status == "in_progress":
-            await self.send_error("Partità già iniziata!")
+            await self.send(text_data=json.dumps({
+                "type": "kicked",
+                "message": "Partita già iniziata!"
+            }))
             await self.close()
             return
 
@@ -114,6 +117,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             await self.room.broadcast_state()
 
         elif msg_type == "capture_attempt":
+            print("Received capture attempt")
             success = self.room.attempt_capture(self.player_id, data["targetId"])
             await self.send(text_data=json.dumps({
                 "type": "capture_result", "success": success

@@ -17,6 +17,7 @@ export function CaptureController({ onCapture }: CaptureConrollerProps): null {
 
             if (hits.length > 0 && hits[0].object.userData.playerId) {
                 const targetId: string = hits[0].object.userData.playerId;
+                console.log("Sent capture attempt");
                 onCapture(targetId);
             }
         }
