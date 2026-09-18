@@ -5,6 +5,7 @@ from .constants import ROUND_DURATION
 
 from channels.layers import get_channel_layer
 import asyncio
+from .consumers import rooms
 
 #Rooms own all data inside a lobby, handling all group broadcasting and async states relative to the whole lobby
 #Functions are called by the websocket consumer messages, handling all game logic relevant for the entire lobby
@@ -64,6 +65,11 @@ class Room:
             self.players.pop(player_id, None)
             self.player_channels.pop(player_id, None)
             await self.broadcast_state()
+
+            if not self.players:
+                if self.timer_task:
+                    self.timer_task.cancel()
+                    rooms.pop(self.room_code, None)
 
 
 

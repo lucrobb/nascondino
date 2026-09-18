@@ -158,12 +158,5 @@ class LobbyConsumer(AsyncWebsocketConsumer):
                 )
                 player.connected = False
 
-            await self.channel_layer.group_discard(self.group_name, self.channel_name)
-
-            if not self.room.players:
-                rooms.pop(self.room_code, None)
-                if self.room.timer_task and not self.room.timer_task.done():
-                    self.room.timer_task.cancel()
-            else:
-                await self.room.broadcast_state()
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
 
