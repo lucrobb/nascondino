@@ -5,13 +5,13 @@ from .constants import ROUND_DURATION
 
 from channels.layers import get_channel_layer
 import asyncio
-from .room_registry import rooms
+
 
 #Rooms own all data inside a lobby, handling all group broadcasting and async states relative to the whole lobby
 #Functions are called by the websocket consumer messages, handling all game logic relevant for the entire lobby
 
 class Room:
-    def __init__(self, room_code: str, obstacles: dict) -> None:
+    def __init__(self, room_code: str, obstacles: dict, on_empty=None) -> None:
         self.room_code = room_code
         self.group_name = f"lobby_{self.room_code}"
         self.players: dict[str, Player] = {}
@@ -19,6 +19,7 @@ class Room:
         self.obstacles: list[Obstacle] = [Obstacle(obstacle) for obstacle in obstacles]
         self.status = "waiting"
         self.timer_task: asyncio.Task | None = None
+        self.on_empty = on_empty
 
     #Handle websocket broadcasting from within the room, don't depend on consumer connection
     async def broadcast(self, payload: dict):
@@ -69,8 +70,10 @@ class Room:
             if not self.players:
                 if self.timer_task:
                     self.timer_task.cancel()
-                    rooms.pop(self.room_code, None)
 
+                if self.on_empty:
+                    #Delete room with callback from consumers
+                    await self.on_empty(self.room_code)
 
 
     async def force_disconnect(self, player_id: str):

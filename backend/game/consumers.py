@@ -7,11 +7,11 @@ import asyncio
 from .room import Room
 from .types import Obstacle, Player, Position, FacingAngles
 from lobbies.models import Lobby
-from .room_registry import rooms
 
 #Lobby consumers handle specific connections with clients, delegating all group broadcasting to the room class
 #We also store the rooms dict here which contains all active Rooms, easily retrieved using room_code stored in
 #self.room_code at connection
+rooms: dict[str, Room] = {}
 
 class LobbyConsumer(AsyncWebsocketConsumer):
     async def connect(self):
