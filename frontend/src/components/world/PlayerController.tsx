@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react';
 interface PlayerControllerProps {
     facing: React.RefObject<FacingAngles | null>;
     position: React.RefObject<Vector3 | null>;
+    playerHeight: number;
     obstacles: Obstacle[];
     groundRef: React.RefObject<THREE.Mesh[]>;
     onReadyChange: (ready: boolean) => void;
@@ -14,12 +15,11 @@ interface PlayerControllerProps {
 }
 
 
-export function PlayerController({ facing, position, obstacles, groundRef, onReadyChange, onMove, isFound }: PlayerControllerProps): null {
+export function PlayerController({ facing, position, playerHeight, obstacles, groundRef, onReadyChange, onMove, isFound }: PlayerControllerProps): null {
     const { camera } = useThree();
     const raycaster = useRef<THREE.Raycaster>(new THREE.Raycaster());
 
     const MOVE_SPEED: number = 5;
-    const PLAYER_HEIGHT: number = 2;
 
     const timeSinceLastSend = useRef<number>(0);
     const SEND_INTERVAL: number = 1 / 15;
@@ -151,7 +151,7 @@ export function PlayerController({ facing, position, obstacles, groundRef, onRea
             )
             const hits = raycaster.current.intersectObjects(groundRef.current, true);
             if (hits.length > 0) {
-                camera.position.y = hits[0].point.y + PLAYER_HEIGHT;
+                camera.position.y = hits[0].point.y + playerHeight;
             }
 
             position.current = getPosition();

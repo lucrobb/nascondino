@@ -56,6 +56,7 @@ export default function GameRoom() {
 
     const position = useRef<Vector3 | null>(null);
     const facing = useRef<FacingAngles | null>(null);
+    const PLAYER_HEIGHT = 1;
 
     const terrainRef = useRef<Mesh[]>([]);
     function registerTerrain(mesh: Mesh | null): void {
@@ -432,6 +433,7 @@ export default function GameRoom() {
                         <PlayerController
                             facing={facing}
                             position={position}
+                            playerHeight={PLAYER_HEIGHT}
                             obstacles={lobby.obstacles}
                             groundRef={terrainRef}
                             onReadyChange={setPlayerReady}
@@ -444,7 +446,7 @@ export default function GameRoom() {
                         <Lights />
                         <Ground onRegisterRef={registerTerrain} terrain={lobby.terrain}/>
                         <Obstacles obstacles={lobby.obstacles} />
-                        <Players players={players} pId={playerId.current}/>
+                        <Players players={players} pId={playerId.current} playerHeight={PLAYER_HEIGHT}/>
                     </Canvas>
                     )}
                 </div>
