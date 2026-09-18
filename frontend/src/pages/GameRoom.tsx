@@ -73,11 +73,8 @@ export default function GameRoom() {
     const [isHunter, setIsHunter] = useState<boolean>(false);
     const [isFound, setIsFound] = useState<boolean>(false);
     const [isCreator, setIsCreator] = useState<boolean>(false);
-    let playerId: string | null = localStorage.getItem("playerId");
-    if (!playerId) {
-        playerId = crypto.randomUUID();
-        localStorage.setItem("playerId", playerId)
-    }
+    const playerId = useRef<string>(localStorage.getItem("playerId") ?? crypto.randomUUID());
+    useEffect(() => localStorage.setItem("playerId", playerId.current), []);
 
     const [players, setPlayers] = useState<Record<string, Player>>({});
     const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
@@ -130,7 +127,7 @@ export default function GameRoom() {
             return;
         }
 
-        const ws = new WebSocket(`${WS_URL}/${roomCode}/${playerId}/`);
+        const ws = new WebSocket(`${WS_URL}/${roomCode}/${playerId.current}/`);
         socketRef.current = ws;
 
         ws.onopen = () => {
@@ -209,7 +206,6 @@ export default function GameRoom() {
 
         ws.onclose = () => {
             console.log("Websocket disconnected");
-            sessionStorage.removeItem("playerId");
         }
 
         //close when roomCode changes
@@ -220,15 +216,15 @@ export default function GameRoom() {
 
     //Updates player's state based on the new player data incoming from Websocket
     useEffect(() => {
-        if (!playerId) return;
+        if (!playerId.current) return;
 
-        const user: Player | null = players[playerId];
+        const user: Player | null = players[playerId.current];
 
         if (!user) return;
 
         setIsHunter(user.isHunter);
         setIsFound(user.isFound);
-    }, [players, playerId])
+    }, [players, playerId.current])
 
     //Handles menu state based on pointer lock
     useEffect(() => {
@@ -345,7 +341,7 @@ export default function GameRoom() {
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    {Object.entries(players).map(([id, p]) => id !== playerId && (
+                                                    {Object.entries(players).map(([id, p]) => id !== playerId.current && (
                                                         <TableRow key={id}>
                                                             <TableCell>{p.name}</TableCell>
                                                             <TableCell>{p.isHunter ? "SÌ" : "NO"}</TableCell>
@@ -446,7 +442,7 @@ export default function GameRoom() {
                         <Lights />
                         <Ground onRegisterRef={registerTerrain} terrain={lobby.terrain}/>
                         <Obstacles obstacles={lobby.obstacles} />
-                        <Players players={players} pId={playerId} playerHeight={PLAYER_HEIGHT}/>
+                        <Players players={players} pId={playerId.current} playerHeight={PLAYER_HEIGHT}/>
                     </Canvas>
                     )}
                 </div>

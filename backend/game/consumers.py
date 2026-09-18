@@ -21,6 +21,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         self.player_id = self.scope["url_route"]["kwargs"]["player_id"]
         self.is_creator = False
 
+        print("🔥 CONNECT", self.room_code, self.player_id, flush=True)
         print(
             f"WS CONNECT room={self.room_code} "
             f"player={self.player_id} "
@@ -135,6 +136,14 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
     #Handles consumer disconnect, cleaning up the room from rooms if all players have disconnected
     async def disconnect(self, close_code):
+        print(
+            "🔥 DISCONNECT ENTERED",
+            self.player_id,
+            self.channel_name,
+            close_code,
+            flush=True
+        )
+        
         if not hasattr(self, "room"):
             return
         
