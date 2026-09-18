@@ -45,11 +45,11 @@ function Player({ player, playerId, playerHeight }: PlayerProps) {
     return (
         //The y of player positions is the top pf the avatar, we need to subtract the player height
         <group ref={playerRef}>
-            <mesh position={[0, -playerHeight + 0.75, 0]} userData={{ playerId: playerId }}>
+            <mesh position={[0, -playerHeight + 0.875, 0]} userData={{ playerId: playerId }}>
                 <sphereGeometry args={[0.25]} />
                 <meshStandardMaterial color={color} />
             </mesh>
-            <mesh position={[0, -playerHeight, 0]}>
+            <mesh position={[0, -playerHeight + 0.25, 0]}>
                 <boxGeometry args={[0.5, 0.5, 0.5]} />
                 <meshStandardMaterial color={color} />
             </mesh>
