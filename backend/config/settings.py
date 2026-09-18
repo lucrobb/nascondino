@@ -88,10 +88,7 @@ CORS_ALLOWED_ORIGINS = [
 #Using Redis for deployment
 CHANNEL_LAYERS = {
     "default": {
-        "BACKEND": "channels_redis.core.RedisChannelLayer",
-        "CONFIG": {
-            "hosts": [os.environ["REDIS_URL"]],
-        },
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
     },
 }
 
