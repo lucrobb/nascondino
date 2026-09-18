@@ -146,7 +146,7 @@ export function PlayerController({ facing, position, playerHeight, obstacles, gr
         if (!isFound) {
             raycaster.current.set(
                 //Starting position directly above the player
-                new THREE.Vector3(camera.position.x, camera.position.y - 1, camera.position.z),
+                new THREE.Vector3(camera.position.x, camera.position.y, camera.position.z),
                 new THREE.Vector3(0, -1, 0) //Looking straight down
             )
             const hits = raycaster.current.intersectObjects(groundRef.current, true);
