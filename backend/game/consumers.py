@@ -21,13 +21,17 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         obstacles = await self.get_lobby_data(self.room_code)
         if obstacles is None:
             await self.accept()
-            await self.send(text_data=json.dumps({"type": "error", "message": "Lobby not found"}))
+            await self.send(text_data=json.dumps({"type": "error", "message": "Lobby non trovato"}))
             await self.close()
             return
 
         if self.room_code not in rooms:
             rooms[self.room_code] = Room(self.room_code, obstacles)
         self.room = rooms[self.room_code]
+        if self.room.status == "in_progress":
+            await self.send_error("Partità già iniziata!")
+            await self.close()
+            return
 
         self.group_name = f"lobby_{self.room_code}"
         self.player_id = str(uuid.uuid4())
