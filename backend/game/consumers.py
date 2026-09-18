@@ -19,6 +19,13 @@ class LobbyConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_code = self.scope["url_route"]["kwargs"]["room_code"]
         self.player_id = self.scope["url_route"]["kwargs"]["player_id"]
+        self.is_creator = False
+
+        print(
+            f"WS CONNECT room={self.room_code} "
+            f"player={self.player_id} "
+            f"channel={self.channel_name}"
+        )
 
         obstacles = await self.get_lobby_data(self.room_code)
         if obstacles is None:
@@ -80,30 +87,30 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         if msg_type == "join":
             player_data = data["player"]
             self.room.add_player(self.player_id, Player(player_data))
+            player = self.room.players[self.player_id]
+
+            self.is_creator = player.is_creator
             await self.send(text_data=json.dumps({
                 "type": "is_creator",
-                "isCreator": self.room.players.get(self.player_id).is_creator,
+                "isCreator": player.is_creator,
             }))
 
             await self.room.broadcast_state()
 
         elif msg_type == "kick_player":
-            if self.player_id != self.room.creator_id:
-                return
-            id = data["id"]
-            await self.room.force_disconnect(id)
-            await self.room.broadcast_state()
+            if self.is_creator:
+                id = data["id"]
+                await self.room.force_disconnect(id)
+                await self.room.broadcast_state()
 
         elif msg_type == "start_game":
-            if self.player_id != self.room.creator_id: 
-                return
-            self.room.start_game()
-            await self.room.broadcast_state()
+            if self.is_creator: 
+                self.room.start_game()
+                await self.room.broadcast_state()
 
         elif msg_type == "end_game":
-            if self.player_id != self.room.creator_id:
-                return
-            await self.room.end_game()
+            if self.is_creator:
+                await self.room.end_game()
 
         elif msg_type == "move":
             player = self.room.players.get(self.player_id)
@@ -128,16 +135,22 @@ class LobbyConsumer(AsyncWebsocketConsumer):
 
     #Handles consumer disconnect, cleaning up the room from rooms if all players have disconnected
     async def disconnect(self, close_code):
-        if hasattr(self, "room"):
-            player = self.room.players.get(self.player_id)
+        if not hasattr(self, "room"):
+            return
+        
+        player = self.room.players.get(self.player_id)
+        if player is not None:
             player.disconnect_task = asyncio.create_task(
                 self.room.remove_after_timeout(self.player_id)
             )
-            await self.channel_layer.group_discard(self.group_name, self.channel_name)
-            if not self.room.players:
-                rooms.pop(self.room_code, None)
-                if self.room.timer_task and not self.room.timer_task.done():
-                    self.room.timer_task.cancel()
-            else:
-                await self.room.broadcast_state()
+            player.connected = False
+
+        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+        if not self.room.players:
+            rooms.pop(self.room_code, None)
+            if self.room.timer_task and not self.room.timer_task.done():
+                self.room.timer_task.cancel()
+        else:
+            await self.room.broadcast_state()
 
