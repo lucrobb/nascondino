@@ -74,8 +74,11 @@ export default function GameRoom() {
     const [isFound, setIsFound] = useState<boolean>(false);
     const [isCreator, setIsCreator] = useState<boolean>(false);
     const playerId = useRef<string>(localStorage.getItem("playerId") ?? crypto.randomUUID());
-    useEffect(() => localStorage.setItem("playerId", playerId.current), []);
-    console.log("Player id:", playerId.current);
+    useEffect(() => {
+        localStorage.setItem("playerId", playerId.current);
+        console.log("Player id:", playerId.current);
+    }, []);
+    
 
     const [players, setPlayers] = useState<Record<string, Player>>({});
     const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
