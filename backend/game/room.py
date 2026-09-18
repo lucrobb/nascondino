@@ -5,7 +5,7 @@ from .constants import ROUND_DURATION
 
 from channels.layers import get_channel_layer
 import asyncio
-from .consumers import rooms
+from .room_registry import rooms
 
 #Rooms own all data inside a lobby, handling all group broadcasting and async states relative to the whole lobby
 #Functions are called by the websocket consumer messages, handling all game logic relevant for the entire lobby
