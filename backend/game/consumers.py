@@ -28,13 +28,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         if self.room_code not in rooms:
             rooms[self.room_code] = Room(self.room_code, obstacles)
         self.room = rooms[self.room_code]
-        if self.room.status == "in_progress":
-            await self.send(text_data=json.dumps({
-                "type": "kicked",
-                "message": "La partita è già iniziata."
-            }))
-            await self.close()
-            return
 
         self.group_name = f"lobby_{self.room_code}"
         self.player_id = str(uuid.uuid4())
@@ -42,6 +35,13 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
         self.room.register_channel(self.player_id, self.channel_name)
+        if self.room.status == "in_progress":
+            await self.send(text_data=json.dumps({
+                "type": "kicked",
+                "message": "La partita è già iniziata."
+            }))
+            await self.close()
+            return
 
         await self.send(text_data=json.dumps({
             "type": "assigned_id",
