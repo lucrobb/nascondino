@@ -142,7 +142,7 @@ class Room:
 
     def hunters_won(self) -> bool:
         alive, hunters = 0, 0
-        for player in self.players:
+        for player in self.players.values():
             if player.is_hunter: hunters += 1
             else: 
                 if not player.is_found: alive += 1
