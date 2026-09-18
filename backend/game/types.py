@@ -92,6 +92,10 @@ class Player:
         self.is_hunter = player["isHunter"]
         self.is_found = player["isFound"]
 
+        self.disconnect_task = None
+        self.connected = True
+        self.is_creator = False
+
     def to_dict(self) -> dict:
         return {
             "name": self.name,

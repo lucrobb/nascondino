@@ -15,7 +15,6 @@ class Room:
         self.group_name = f"lobby_{self.room_code}"
         self.players: dict[str, Player] = {}
         self.player_channels: dict[str, str] = {}
-        self.creator_id: str | None = None
         self.obstacles: list[Obstacle] = [Obstacle(obstacle) for obstacle in obstacles]
         self.status = "waiting"
         self.timer_task: asyncio.Task | None = None
@@ -33,7 +32,7 @@ class Room:
         state = {
             "type": "state_update",
             "status": self.status,
-            "players": {pid: p.to_dict() for pid, p in self.players.items()}
+            "players": {pid: p.to_dict() for pid, p in self.players.items() if not p.disconnect_task}
         }
         await self.broadcast(state)
 
@@ -55,6 +54,18 @@ class Room:
             "type": "game_over",
             "winner": "hunters" if self.hunters_won() else "hiders",
         })
+
+    async def remove_after_timeout(self, player_id: str):
+        await asyncio.sleep(20)
+
+        player = self.players.get(player_id)
+
+        if player is not None and player.disconnect_task is not None:
+            self.players.pop(player_id, None)
+            self.player_channels.pop(player_id, None)
+            await self.broadcast_state()
+
+
 
     async def force_disconnect(self, player_id: str):
         self.remove_player(player_id)
@@ -84,9 +95,17 @@ class Room:
         self.player_channels[player_id] = channel_name
 
     def add_player(self, player_id: str, player: Player):
+        #Player disconnected and came back within the disconnection time window
+        if player_id in self.players:
+            existing_player = self.players.get(player_id)
+            if existing_player.disconnect_task:
+                existing_player.disconnect_task.cancel()
+                existing_player.disconnect_task = None
+            return
+        
         if not self.players:
             #user is creator of lobby
-            self.creator_id = player_id
+            player.is_creator = True
         self.players[player_id] = player
 
     def remove_player(self, player_id: str):

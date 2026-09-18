@@ -2,6 +2,7 @@ import json
 import uuid
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
+import asyncio
 
 from .room import Room
 from .types import Obstacle, Player, Position, FacingAngles
@@ -17,6 +18,7 @@ rooms: dict[str, Room] = {}
 class LobbyConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_code = self.scope["url_route"]["kwargs"]["room_code"]
+        self.player_id = self.scope["url_route"]["kwargs"]["player_id"]
 
         obstacles = await self.get_lobby_data(self.room_code)
         if obstacles is None:
@@ -30,11 +32,11 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         self.room = rooms[self.room_code]
 
         self.group_name = f"lobby_{self.room_code}"
-        self.player_id = str(uuid.uuid4())
 
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
         self.room.register_channel(self.player_id, self.channel_name)
+
         if self.room.status == "in_progress":
             await self.send(text_data=json.dumps({
                 "type": "kicked",
@@ -43,10 +45,6 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             await self.close()
             return
 
-        await self.send(text_data=json.dumps({
-            "type": "assigned_id",
-            "playerId": self.player_id,
-        }))
 
     @database_sync_to_async
     def get_lobby_data(self, room_code: str) -> dict | None:
@@ -84,7 +82,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             self.room.add_player(self.player_id, Player(player_data))
             await self.send(text_data=json.dumps({
                 "type": "is_creator",
-                "isCreator": self.player_id == self.room.creator_id,
+                "isCreator": self.room.players.get(self.player_id).is_creator,
             }))
 
             await self.room.broadcast_state()
@@ -131,7 +129,10 @@ class LobbyConsumer(AsyncWebsocketConsumer):
     #Handles consumer disconnect, cleaning up the room from rooms if all players have disconnected
     async def disconnect(self, close_code):
         if hasattr(self, "room"):
-            self.room.remove_player(self.player_id)
+            player = self.room.players.get(self.player_id)
+            player.disconnect_task = asyncio.create_task(
+                self.room.remove_after_timeout(self.player_id)
+            )
             await self.channel_layer.group_discard(self.group_name, self.channel_name)
             if not self.room.players:
                 rooms.pop(self.room_code, None)
