@@ -146,20 +146,24 @@ class LobbyConsumer(AsyncWebsocketConsumer):
         
         if not hasattr(self, "room"):
             return
-        
-        player = self.room.players.get(self.player_id)
-        if player is not None:
-            player.disconnect_task = asyncio.create_task(
-                self.room.remove_after_timeout(self.player_id)
-            )
-            player.connected = False
 
-        await self.channel_layer.group_discard(self.group_name, self.channel_name)
+        current_channel = self.room.player_channels.get(self.player_id)
 
-        if not self.room.players:
-            rooms.pop(self.room_code, None)
-            if self.room.timer_task and not self.room.timer_task.done():
-                self.room.timer_task.cancel()
-        else:
-            await self.room.broadcast_state()
+        #Only mark player as disconnected if there is not yet a channel that has recovered the same player
+        if current_channel == self.channel_name:
+            player = self.room.players.get(self.player_id)
+            if player is not None:
+                player.disconnect_task = asyncio.create_task(
+                    self.room.remove_after_timeout(self.player_id)
+                )
+                player.connected = False
+
+            await self.channel_layer.group_discard(self.group_name, self.channel_name)
+
+            if not self.room.players:
+                rooms.pop(self.room_code, None)
+                if self.room.timer_task and not self.room.timer_task.done():
+                    self.room.timer_task.cancel()
+            else:
+                await self.room.broadcast_state()
 
