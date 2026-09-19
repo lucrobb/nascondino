@@ -34,7 +34,7 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             return
 
         if self.room_code not in rooms:
-            rooms[self.room_code] = Room(self.room_code, obstacles)
+            rooms[self.room_code] = Room(self.room_code, obstacles, on_empty=self.remove_room)
         self.room = rooms[self.room_code]
 
         self.group_name = f"lobby_{self.room_code}"
@@ -63,6 +63,10 @@ class LobbyConsumer(AsyncWebsocketConsumer):
     #called by room, allows to be called for each client of the channel
     async def room_message(self, event):
         await self.send(text_data=json.dumps(event["payload"]))
+
+    #We need to use the function as a callback in room to avoid circular imports
+    async def remove_room(self, room_code: str):
+        rooms.pop(room_code, None)
 
     async def send_error(self, message):
         await self.send(text_data=json.dumps({
