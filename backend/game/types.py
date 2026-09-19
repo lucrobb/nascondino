@@ -96,11 +96,24 @@ class Player:
         self.connected = True
         self.is_creator = False
 
-    def to_dict(self) -> dict:
+    def to_dict_for_initialization(self) -> dict:
         return {
             "name": self.name,
             "position": self.position.to_dict(),
             "facing": self.facing.to_dict(),
             "isHunter": self.is_hunter,
+            "isFound": self.is_found,
+            "isCreator": self.is_creator
+        }
+    def to_dict_for_user_state(self) -> dict:
+        return {
+            "isHunter": self.is_hunter,
             "isFound": self.is_found
+        }
+    def to_dict_for_others(self) -> dict:
+        return {
+            "name": self.name,
+            "position": self.position.to_dict(),
+            "facing": self.facing.to_dict(),
+            "isHunter": self.is_hunter
         }
