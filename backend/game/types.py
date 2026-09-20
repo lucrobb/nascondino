@@ -60,16 +60,8 @@ class Terrain:
 
     def to_dict(self) -> dict:
         return {
-            "position": {
-                "x": self.position.x,
-                "y": self.position.x,
-                "z": self.position.z
-            },
-            "rotation": {
-                "x": self.rotation.x,
-                "y": self.rotation.y,
-                "z": self.rotation.z
-            },
+            "position": self.position.to_dict(),
+            "rotation": self.rotation.to_dict(),
             "width": self.width,
             "height": self.height,
             "depth": self.depth

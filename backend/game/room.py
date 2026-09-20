@@ -23,7 +23,7 @@ class Room:
 
         self.obstacles: list[dict] = lobby.obstacles
         self.terrain: list[dict] = lobby.terrain
-        self.spawn_position: Position = Position(lobby.spawn_position)
+        self.spawn_position: Position = Position(**lobby.spawn_position)
 
         self.status = "waiting"
         self.timer_task: asyncio.Task | None = None
@@ -65,7 +65,10 @@ class Room:
                 idx[pid] = len(players) - 1
 
         for pid, player in self.players.items():
-            player_idx = idx[pid]
+            player_idx = idx.get(pid)
+            if player_idx is None:
+                continue
+            
             #We return the players excluding the user
             other_players = players[:player_idx] + players[player_idx + 1:] if player_idx else players
             await self.send_to_consumer(
@@ -253,10 +256,9 @@ class Room:
         )
 
         if success:
+            await self.check_game_over()
             await self.broadcast_state()
 
-            if self.is_game_over():
-                await self.end_game()
 
 #-----------------------------------------------------------------------------------------------------------------------
 #-----------------------------------------------------------------------------------------------------------------------
@@ -275,7 +277,7 @@ class Room:
         alive, hunters = self.alive_and_hunters()
         return alive == 0 and hunters > 0
 
-    def check_game_over(self):
+    async def check_game_over(self):
         alive, hunters = self.alive_and_hunters()
         if alive == 0 or hunters == 0:
             await self.end_game()

@@ -109,8 +109,8 @@ class LobbyConsumer(AsyncWebsocketConsumer):
             await self.room.end_game()
 
         elif msg_type == "move":
-            self.player.position = Position(data["position"])
-            self.player.facing = FacingAngles(data["facing"])
+            self.player.position = Position(**data["position"])
+            self.player.facing = FacingAngles(**data["facing"])
 
             await self.room.broadcast_state()
 

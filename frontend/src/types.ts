@@ -39,6 +39,7 @@ export interface Player {
     isFound: boolean;
 
     name: string;
+    id: string
 }
 
 export type StatusType = "waiting" | "in_progress" | "ended";
