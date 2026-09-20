@@ -58,7 +58,7 @@ class Room:
         idx = {}
         players = []
         for pid, player in self.players.items():
-            if player.connected and not player.is_found:
+            if player.connected:
                 curr = player.to_dict_for_others()
                 curr["id"] = pid
                 players.append(curr)
@@ -78,7 +78,7 @@ class Room:
                     "type": "state_update",
                     "status": self.status,
                     "player": player.to_dict_for_user_state(),
-                    "players": other_players
+                    "otherPlayers": other_players
                 }
             )
 
@@ -89,7 +89,7 @@ class Room:
 
         other_players = []
         for pid, player in self.players.items():
-            if player.connected and not player.is_found and pid != player_id:
+            if player.connected and pid != player_id:
                 curr = player.to_dict_for_others()
                 curr["id"] = pid
                 other_players.append(curr)
@@ -105,7 +105,9 @@ class Room:
                     "status": self.status
                 },
                 "player": player.to_dict_for_initialization(),
-                "players": other_players
+                "position": player.position.to_dict(),
+                "facing": player.facing.to_dict(),
+                "otherPlayers": other_players
             }
         )
 
@@ -251,7 +253,8 @@ class Room:
             "room.message", 
             {
                 "type": "capture_result",
-                "success": success
+                "success": success,
+                "targetName": target.name
             }
         )
 

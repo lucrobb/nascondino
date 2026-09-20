@@ -15,22 +15,11 @@ export class WebsocketSend {
         }
     }
 
-    public join = (
-        position: Vector3,
-        facing: FacingAngles,
-        isHunter: boolean,
-        isFound: boolean,
-        name: string
-    ): void =>  {
+    public join = (name: string | null): void =>  {
+        if (!name) return;
         this.send({
             type: "join",
-            player: {
-                position,
-                facing,
-                isHunter,
-                isFound,
-                name
-            }
+            name
         })
     }
 

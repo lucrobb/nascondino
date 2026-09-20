@@ -1,16 +1,15 @@
-import type { Player } from '../../types';
+import type { Player, OtherPlayer } from '../../types';
 import { useFrame } from '@react-three/fiber';
 import { Group, Vector3 } from 'three';
 import { useRef } from 'react';
 
 
 interface PlayerProps {
-    player: Player;
-    playerId: string;
+    player: OtherPlayer;
     playerHeight: number;
 }
 
-function Player({ player, playerId, playerHeight }: PlayerProps) {
+function Player({ player, playerHeight }: PlayerProps) {
     //playerRef modifies the group mesh directly with its current state
     const playerRef = useRef<Group>(null);
     const currentPosition = useRef<Vector3>(new Vector3());
@@ -45,7 +44,7 @@ function Player({ player, playerId, playerHeight }: PlayerProps) {
     return (
         //The y of player positions is the top pf the avatar, we need to subtract the player height
         <group ref={playerRef}>
-            <mesh position={[0, -playerHeight + 0.875, 0]} userData={{ playerId: playerId }}>
+            <mesh position={[0, -playerHeight + 0.875, 0]} userData={{ playerId: player.id }}>
                 <sphereGeometry args={[0.25]} />
                 <meshStandardMaterial color={color} />
             </mesh>
@@ -60,7 +59,7 @@ function Player({ player, playerId, playerHeight }: PlayerProps) {
 
 
 interface PlayersProps {
-    players: Record<string, Player>
+    players: OtherPlayer[];
     pId: string | null;
     playerHeight: number;
 }
@@ -69,10 +68,8 @@ interface PlayersProps {
 export function Players({ players, pId, playerHeight }: PlayersProps) {
     return (
         <>
-            {Object.entries(players).map(([id, p]) => (
-                id !== pId && !p.isFound && (
-                    <Player key={id} player={p} playerId={id} playerHeight={playerHeight}/>
-                )
+            {players.map((p) => (
+                <Player key={p.id} player={p} playerHeight={playerHeight}/>
             ))}
         </>
     )

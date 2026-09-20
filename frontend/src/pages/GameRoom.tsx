@@ -1,6 +1,16 @@
 import { useParams, useNavigate } from 'react-router';
 import { useEffect, useState, useRef } from 'react';
-import type { Vector3, Lobby, ServerMessage, FacingAngles, Player } from '../types';
+import type { 
+    Vector3, 
+    Lobby, 
+    ServerMessage, 
+    FacingAngles, 
+    Player, 
+    OtherPlayer,
+    StatusType, 
+    Obstacle,
+    Terrain 
+} from '../types';
 import { getLobby } from '../api/lobbies';
 import { WebsocketSend } from '../api/game';
 import { toast } from 'sonner';
@@ -47,17 +57,21 @@ export default function GameRoom() {
     const navigate = useNavigate();
     const WS_URL = import.meta.env.VITE_WS_URL;
 
-    const [lobby, setLobby] = useState<Lobby | null>(null);
+    const playerId = useRef<string>(localStorage.getItem("playerId") ?? crypto.randomUUID());
+    useEffect(() => {
+        localStorage.setItem("playerId", playerId.current);
+        console.log("Player id:", playerId.current);
+    }, []);
 
-    const isWaiting = lobby?.status === "waiting";
-    const isPlaying = lobby?.status === "in_progress";
-    const isEnded = lobby?.status === "ended";
+    const name = useRef<string | null>(sessionStorage.getItem("playerName"));
+    const nameInput = useRef<string>("")
+    const [initialized, setInitialized] = useState<boolean>(false);
+
+    const [status, setStatus] = useState<StatusType | null>(null);
     const [winner, setWinner] = useState<"hunters" | "hiders" | null>(null);
 
-    const position = useRef<Vector3 | null>(null);
-    const facing = useRef<FacingAngles | null>(null);
-    const PLAYER_HEIGHT = 1;
-
+    const [obstacles, setObstacles] = useState<Obstacle[]>([]);
+    const [terrain, setTerrain] = useState<Terrain[]>([]);
     const terrainRef = useRef<Mesh[]>([]);
     function registerTerrain(mesh: Mesh | null): void {
         if (mesh && !terrainRef.current.includes(mesh)) {
@@ -65,38 +79,21 @@ export default function GameRoom() {
         }
     }
 
-    const [playerReady, setPlayerReady] = useState<boolean>(false);
+    const [player, setPlayer] = useState<Player | null>(null);
+    const position = useRef<Vector3 | null>(null);
+    const facing = useRef<FacingAngles | null>(null);
+    const [otherPlayers, setOtherPlayers] = useState<OtherPlayer[]>([]);
 
-    const [name, setName] = useState<string | null>(() => sessionStorage.getItem("playerName"));
-    const [nameInput, setNameInput] = useState<string>("");
+    const PLAYER_HEIGHT = 1;
 
-    const [isHunter, setIsHunter] = useState<boolean>(false);
-    const [isFound, setIsFound] = useState<boolean>(false);
-    const [isCreator, setIsCreator] = useState<boolean>(false);
-    const playerId = useRef<string>(localStorage.getItem("playerId") ?? crypto.randomUUID());
-    useEffect(() => {
-        localStorage.setItem("playerId", playerId.current);
-        console.log("Player id:", playerId.current);
-    }, []);
-    
-
-    const [players, setPlayers] = useState<Record<string, Player>>({});
     const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
     const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
-    const socketRef = useRef<WebSocket | null>(null); 
+    const socketRef = useRef<WebSocket | null>(null);
     //Class storing all websocket client messages to send to the server
     const wsSend = new WebsocketSend(socketRef);
 
-    async function fetchLobby(code: string): Promise<void> {
-        try {
-            const data: Lobby = await getLobby(code);
-            setLobby(data);
-        } catch (err) {
-            toast.error(err instanceof ApiError ? err.message : "Errore di rete");
-            navigate("/");
-        }
-    }
+
 
     useEffect(() => {
         if (!roomCode) {
@@ -104,123 +101,85 @@ export default function GameRoom() {
             return;
         }
 
-        fetchLobby(roomCode);
+        socketRef.current = new WebSocket(`${WS_URL}/${roomCode}/${playerId.current}`)
     }, [roomCode]);
 
 
     function handleNameSubmit() {
-        const newName = nameInput.trim();
+        const newName = nameInput.current.trim();
 
         if (!newName) return;
-        setName(newName);
+        name.current = newName
         sessionStorage.setItem("playerName", newName);
     }
 
-
-    //Websocket connection established once user chooses name and enters in lobby (full Player data)
     useEffect(() => {
-        if (!roomCode || !name || !playerReady) {
-            return;
+        if (!name.current || !socketRef.current) return;
+
+        //We send the join request to the server to load the lobby
+        socketRef.current.onopen = () => {
+            wsSend.join(name.current);
         }
 
-        const ws = new WebSocket(`${WS_URL}/${roomCode}/${playerId.current}/`);
-        socketRef.current = ws;
-
-        ws.onopen = () => {
-            console.log("Websocket connected");
-
-            if (!position.current || !facing.current) {
-                console.error('Camera data not ready');
-                return;
-            }
-
-            wsSend.join(
-                position.current,
-                facing.current,
-                isHunter,
-                isFound,
-                name
-            )
-        };
-
-        ws.onmessage = (event) => {
+        socketRef.current.onmessage = (event) => {
             const data: ServerMessage = JSON.parse(event.data);
 
-            switch (data.type) {
-                case "is_creator":
-                    setIsCreator(data.isCreator);
-                    break;
+            if (data.type === "initial_state") {
+                setObstacles(data.lobby.obstacles);
+                setTerrain(data.lobby.terrain);
+                setStatus(data.lobby.status);
 
-                case "state_update":
-                    setLobby(lobby => {
-                        if (!lobby) return lobby;
+                setPlayer(data.player);
+                position.current = data.position;
+                facing.current = data.facing;
+                setOtherPlayers(data.otherPlayers);
 
-                        return {
-                            ...lobby,
-                            status: data.status
-                        } 
-                    });
-                    setPlayers(data.players);
-                    break;
-
-                case "time_update":
-                    setTimeRemaining(data["remaining"]);
-                    break;
-
-                case "capture_result":
-                    if (data.success) {
-                        toast.success("Catturato!");
-                    }
-                    break;
-
-                case "game_over":
-                    setLobby(lobby => {
-                        if (!lobby) return lobby;
-
-                        return {
-                            ...lobby,
-                            status: "ended"
-                        }
-                    });
-                    setWinner(data["winner"])
-                    break;
-
-                case "kicked":
-                    toast.error(data.message);
-                    navigate("/");
-                    break;
-
-                case "error":
-                    toast.error(data.message);
-                    break;
+                setInitialized(true);
             }
+            //Player not yet loaded, can't send any other messages until then 
+            else if (!player) return;
+
+            else if (data.type === "state_update") {
+                setStatus(data.status);
+
+                setPlayer(prev => prev ? {...prev, isFound: data.player.isFound, isHunter: data.player.isHunter} : prev)
+                setOtherPlayers(data.otherPlayers);
+            }
+
+            else if (data.type === "time_update") {
+                setTimeRemaining(data.remaining);
+            }
+
+            else if (data.type === "capture_result") {
+                if (data.success) toast.success(`Hai catturato ${data.targetName}!`);
+                else toast.error(`Ti è sfuggit* ${data.targetName}!`)
+            }
+
+            else if (data.type === "game_over") {
+                setStatus("ended");
+                setWinner(data.winner);
+            }
+
+            else if (data.type === "kicked") {
+                toast.error(data.message);
+                navigate("/");
+            }
+
+            else if (data.type === "error") toast.error(data.message);
+
         }
 
-        ws.onerror = () => {
+        socketRef.current.onerror = () => {
             toast.error("Errore di connessione")
-        }
-
-        ws.onclose = () => {
-            console.log("Websocket disconnected");
         }
 
         //close when roomCode changes
         return () => {
-            ws.close();
+            if (!socketRef.current) return;
+            socketRef.current.close();
         }
-    }, [roomCode, name, playerReady])
 
-    //Updates player's state based on the new player data incoming from Websocket
-    useEffect(() => {
-        if (!playerId.current) return;
-
-        const user: Player | null = players[playerId.current];
-
-        if (!user) return;
-
-        setIsHunter(user.isHunter);
-        setIsFound(user.isFound);
-    }, [players, playerId.current])
+    }, [initialized])
 
     //Handles menu state based on pointer lock
     useEffect(() => {
@@ -228,15 +187,15 @@ export default function GameRoom() {
             if ((!document.pointerLockElement && e.code === "Escape") || e.code === "Tab") {
                 document.exitPointerLock();
                 setMenuOpen(true); // pointer lock was exited (Esc, or programmatically) — show menu
-            } else if (e.code === "Enter" && isCreator && !isPlaying) {
+            } else if (e.code === "Enter" && player?.isCreator && status !== "in_progress") {
                 wsSend.startGame();
-            } else if (e.code === "Backspace" && isEnded) {
+            } else if (e.code === "Backspace" && status === "ended") {
                 navigate("/");
             }
         }
         document.addEventListener("keydown", onKeyDown);
         return () => document.removeEventListener("keydown", onKeyDown);
-    }, [isCreator, isPlaying, isEnded]);
+    }, [player, status]);
     
 
 
@@ -259,8 +218,7 @@ export default function GameRoom() {
                         className="space-y-4"
                     >
                         <Input
-                            value={nameInput}
-                            onChange={(e) => setNameInput(e.target.value)}
+                            onChange={(e) => nameInput.current = e.target.value}
                             placeholder="Il tuo nome"
                             maxLength={20}
                             autoFocus
@@ -268,7 +226,7 @@ export default function GameRoom() {
 
                         <Button
                             type="submit"
-                            disabled={!nameInput.trim()}
+                            disabled={!nameInput.current.trim()}
                             className="w-full"
                         >
                             Unisciti
@@ -282,8 +240,8 @@ export default function GameRoom() {
                         <div className="w-3 h-3 rounded-full bg-primary" />
                     </div>
 
-                    {!lobby && (<div>Carica...</div>)}
-                    {menuOpen && (
+                    {!initialized && (<div>Carica...</div>)}
+                    {menuOpen && player && initialized && (
                         <Dialog open={menuOpen} onOpenChange={setMenuOpen}>
                             <DialogContent
                                 className="pointer-events-auto"
@@ -293,19 +251,19 @@ export default function GameRoom() {
                                 <Tabs defaultValue="menu">
                                     <TabsList className="mb-4">
                                         <TabsTrigger value="menu" className="uppercase tracking-wide">Menu</TabsTrigger>
-                                        {isCreator && <TabsTrigger value="players" className="uppercase tracking-wide">Giocatori</TabsTrigger>}
+                                        {player.isCreator && <TabsTrigger value="players" className="uppercase tracking-wide">Giocatori</TabsTrigger>}
                                     </TabsList>
                                     <TabsContent value="menu">
                                         <div className="flex flex-col gap-4">
                                             <Button onClick={() => setMenuOpen(false)}>Riprendi</Button>
 
-                                            {isCreator && (
+                                            {player.isCreator && (
                                                 <div className="border-t pt-4 flex flex-col gap-2">
                                                     <span className="text-sm uppercase tracking-wide text-muted-foreground">
                                                         Controlli host
                                                     </span>
 
-                                                    {!isPlaying && (
+                                                    {status !== "in_progress" && (
                                                         <Button onClick={() => {
                                                             wsSend.startGame();
                                                             setMenuOpen(false);
@@ -313,7 +271,7 @@ export default function GameRoom() {
                                                             Inizia partita
                                                         </Button>
                                                     )}
-                                                    {isPlaying && (
+                                                    {status === "in_progress" && (
                                                         <Button variant="destructive" onClick={wsSend.endGame}>
                                                             Termina partita
                                                         </Button>
@@ -324,10 +282,10 @@ export default function GameRoom() {
                                             <Button variant="destructive" onClick={() => navigate("/")}>Esci dalla partita</Button>
                                         </div>
                                     </TabsContent>
-                                    {isCreator && (
+                                    {player.isCreator && (
                                         <TabsContent value="players">
                                             <Table>
-                                                <TableCaption>{Object.entries(players).length > 1 ? "Giocatori nella lobby" : "La lobby è vuota"}</TableCaption>
+                                                <TableCaption>{otherPlayers.length > 1 ? "Giocatori nella lobby" : "La lobby è vuota"}</TableCaption>
                                                 <TableHeader>
                                                     <TableRow>
                                                         <TableHead className="uppercase tracking-wide">Nome</TableHead>
@@ -337,13 +295,13 @@ export default function GameRoom() {
                                                     </TableRow>
                                                 </TableHeader>
                                                 <TableBody>
-                                                    {Object.entries(players).map(([id, p]) => id !== playerId.current && (
-                                                        <TableRow key={id}>
+                                                    {otherPlayers.map((p) => p.id !== playerId.current && (
+                                                        <TableRow key={p.id}>
                                                             <TableCell>{p.name}</TableCell>
                                                             <TableCell>{p.isHunter ? "SÌ" : "NO"}</TableCell>
                                                             <TableCell>{p.isFound ? "SÌ" : "NO"}</TableCell>
                                                             <TableCell align="right">
-                                                                <Button variant="destructive" className="text-xs h-fit p-2" onClick={() => wsSend.kickPlayer(id)}>Espelli</Button>
+                                                                <Button variant="destructive" className="text-xs h-fit p-2" onClick={() => wsSend.kickPlayer(p.id)}>Espelli</Button>
                                                             </TableCell>
                                                         </TableRow>
                                                     ))}
@@ -358,48 +316,48 @@ export default function GameRoom() {
                     )}
 
                     <div className="fixed top-10 right-10 z-20 flex flex-col gap-2">
-                        {isCreator && !isPlaying && (
+                        {player?.isCreator && status !== "in_progress" && (
                             <Button onClick={wsSend.startGame}>
                                 Inizia partita
                                 <Kbd className="ml-2 bg-transparent text-current">⏎</Kbd>
                             </Button>
                         )}
-                        {isEnded && (
+                        {status === "ended" && (
                             <Button onClick={() => navigate("/")}>
                                 Esci
                                 <Kbd className="ml-2 bg-transparent text-current">⌫</Kbd>
                             </Button>
                         )}
                     </div>
-                    {isWaiting && (
+                    {status === "waiting" && (
                         <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
                             <div className="bg-background border-2 px-6 py-2 rounded-md uppercase tracking-wide font-medium">
-                                {isCreator ? "In attesa che inizi la partita" : "In attesa che l'host inizi la partita"}
+                                {player?.isCreator ? "In attesa che inizi la partita" : "In attesa che l'host inizi la partita"}
                             </div>
                         </div>
                     )}
-                    {isPlaying && !isFound && (
+                    {status === "in_progress" && !player?.isFound && (
                         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
                             <div className={`px-6 py-2 rounded-md uppercase tracking-wide font-medium ${
-                                isHunter ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+                                player?.isHunter ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
                             }`}>
-                                {isHunter ? "Cacciatore" : "Nascost*"}
+                                {player?.isHunter ? "Cacciatore" : "Nascost*"}
                             </div>
                         </div>
                     )}
-                    {isPlaying && timeRemaining !== null && (
+                    {status === "in_progress" && timeRemaining !== null && (
                         <div className="fixed top-6 right-6 z-20 text-2xl font-mono">
                             {Math.floor(timeRemaining / 60)}:{String(timeRemaining % 60).padStart(2, "0")}
                         </div>
                     )}
-                    {isEnded && (
+                    {status === "ended" && (
                         <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
                             <div className="bg-background border-2 px-6 py-2 rounded-md uppercase tracking-wide font-medium">
                                 La partita è finita. Hanno vinto i {winner === "hunters" ? "cacciatori" : "nascosti"}
                             </div>
                         </div>
                     )}
-                    {isFound && (
+                    {player?.isFound && (
                         <div className="fixed top-0 inset-x-0 flex justify-center pt-6 z-20 pointer-events-none">
                             <div className="bg-destructive text-destructive-foreground px-6 py-2 rounded-md uppercase tracking-wide font-medium">
                                 Sei stat* trovat*
@@ -408,13 +366,13 @@ export default function GameRoom() {
                     )}
 
 
-                    {(lobby) && (
+                    {initialized && player && position.current && facing.current && (
                         <Canvas
                         camera={{
                             position: [
-                                lobby.spawnPosition.x,
-                                lobby.spawnPosition.y,
-                                lobby.spawnPosition.z
+                                position.current.x,
+                                position.current.y,
+                                position.current.z
                             ],
                             fov: 75,
                             near: 0.1,
@@ -426,19 +384,18 @@ export default function GameRoom() {
                             facing={facing}
                             position={position}
                             playerHeight={PLAYER_HEIGHT}
-                            obstacles={lobby.obstacles}
+                            obstacles={obstacles}
                             groundRef={terrainRef}
-                            onReadyChange={setPlayerReady}
                             onMove={wsSend.move}
-                            isFound={isFound}
+                            isFound={player.isFound}
                         />
                         <CaptureController
                             onCapture={wsSend.captureTarget}
                         />
                         <Lights />
-                        <Ground onRegisterRef={registerTerrain} terrain={lobby.terrain}/>
-                        <Obstacles obstacles={lobby.obstacles} />
-                        <Players players={players} pId={playerId.current} playerHeight={PLAYER_HEIGHT}/>
+                        <Ground onRegisterRef={registerTerrain} terrain={terrain}/>
+                        <Obstacles obstacles={obstacles} />
+                        <Players players={otherPlayers} pId={playerId.current} playerHeight={PLAYER_HEIGHT}/>
                     </Canvas>
                     )}
                 </div>

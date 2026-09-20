@@ -91,8 +91,6 @@ class Player:
     def to_dict_for_initialization(self) -> dict:
         return {
             "name": self.name,
-            "position": self.position.to_dict(),
-            "facing": self.facing.to_dict(),
             "isHunter": self.is_hunter,
             "isFound": self.is_found,
             "isCreator": self.is_creator
@@ -107,5 +105,6 @@ class Player:
             "name": self.name,
             "position": self.position.to_dict(),
             "facing": self.facing.to_dict(),
-            "isHunter": self.is_hunter
+            "isHunter": self.is_hunter,
+            "isFound": self.is_found
         }
