@@ -91,7 +91,23 @@ export function PlayerController({ facing, position, playerHeight, obstacles, gr
         };
     }, []);
 
+    //Assign facing when necessary (like when server-assigned)
+    const initializedFacing = useRef<boolean>(false);
+
     useFrame((_, delta) => {
+      if (facing.current && !initializedFacing.current){
+        const { horizontal, vertical } = facing.current;
+
+        const direction = new THREE.Vector3(
+            Math.cos(vertical) * Math.cos(horizontal),
+            Math.sin(vertical),
+            Math.cos(vertical) * Math.sin(horizontal)
+        );
+
+        camera.lookAt(camera.position.clone().add(direction));
+        initializedFacing.current = true;
+      }
+
         const { forward, backward, left, right} = moveState.current;
         timeSinceLastSend.current += delta;
 

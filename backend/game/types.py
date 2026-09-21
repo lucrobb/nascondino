@@ -68,21 +68,21 @@ class Terrain:
         }
 
 class Player:
-    def __init__(self, player: dict):
-        self.position = Position(
-            x=player["position"]["x"],
-            y=player["position"]["y"],
-            z=player["position"]["z"]
-        )
-        self.facing = FacingAngles(
-            horizontal=player["facing"]["horizontal"],
-            vertical=player["facing"]["vertical"]
-        )
+    def __init__(
+        self,
+        name: str,
+        position: Position,
+        facing: FacingAngles,
+        is_hunter: bool,
+        is_found: bool,
+    ):
+        self.position = position
+        self.facing = facing
 
-        self.name = player["name"]
+        self.name = name
 
-        self.is_hunter = player["isHunter"]
-        self.is_found = player["isFound"]
+        self.is_hunter = is_hunter
+        self.is_found = is_found
 
         self.disconnect_task = None
         self.connected = True

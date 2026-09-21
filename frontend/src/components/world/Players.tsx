@@ -60,12 +60,11 @@ function Player({ player, playerHeight }: PlayerProps) {
 
 interface PlayersProps {
     players: OtherPlayer[];
-    pId: string | null;
     playerHeight: number;
 }
 
 //pId stores the user's own player, so they can't see themself
-export function Players({ players, pId, playerHeight }: PlayersProps) {
+export function Players({ players, playerHeight }: PlayersProps) {
     return (
         <>
             {players.map((p) => (

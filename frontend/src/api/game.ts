@@ -17,6 +17,7 @@ export class WebsocketSend {
 
     public join = (name: string | null): void =>  {
         if (!name) return;
+        
         this.send({
             type: "join",
             name

@@ -178,7 +178,7 @@ class Room:
     async def start_round_timer(self):
         remaining = ROUND_DURATION
         while remaining > 0:
-            await self.broadcast({
+            await self.broadcast("room.message", {
                 "type": "time_update", 
                 "remaining": remaining
             })
@@ -186,7 +186,7 @@ class Room:
             remaining -= 1
         await self.end_game()
 
-    def start_game(self):
+    async def start_game(self):
         if self.status == "in_progress":
             return
         
@@ -202,6 +202,8 @@ class Room:
         self.status = "in_progress"
         self.timer_task = asyncio.create_task(self.start_round_timer())
 
+        await self.broadcast_state()
+
     async def end_game(self):
         if self.status != "in_progress":
             return
@@ -213,7 +215,7 @@ class Room:
             player.is_found = False
             player.is_hunter = False
 
-        await self.broadcast({
+        await self.broadcast("room.message", {
             "type": "game_over",
             "winner": "hunters" if self.hunters_won() else "hiders",
         })
