@@ -27,6 +27,7 @@ import { GameUi } from '../components/world/GameUi';
 import { NameInput } from '../components/world/NameInput';
 import { MenuDialog } from '../components/world/MenuDialog';
 import { SceneFog } from '../components/world/SceneFog';
+import { LoadingScreen } from '@/components/world/LoadingScreen';
 
 
 export default function GameRoom() {
@@ -184,6 +185,7 @@ export default function GameRoom() {
                     <div className="pointer-events-none fixed inset-0 flex items-center justify-center z-10">
                         <div className="w-2 h-2 rounded-full bg-primary" />
                     </div>
+                    {!initialized && <LoadingScreen message="Caricamento della partita" />}
 
                     {initialized && player && status && (
                         <>
