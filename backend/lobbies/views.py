@@ -27,138 +27,135 @@ def create_lobby(request):
     DEFAULT_SPAWN = {"x": 0, "y": 1, "z": 0}
 
     DEFAULT_OBSTACLES = [
-        # Central wall cluster
+        # ─────────────────────────
+        # Central structure
+        # ─────────────────────────
+
         {
-            "position": {"x": 5, "y": 1, "z": 0},
-            "width": 1,
+            "position": {"x": 0, "y": 1, "z": -6},
+            "width": 10,
             "height": 2,
-            "depth": 6,
+            "depth": 1,
             "material": "concrete",
             "blocksVision": True,
             "blocksMovement": True,
         },
         {
-            "position": {"x": -5, "y": 1, "z": 0},
-            "width": 1,
+            "position": {"x": 0, "y": 1, "z": 6},
+            "width": 10,
             "height": 2,
-            "depth": 6,
+            "depth": 1,
             "material": "brick",
             "blocksVision": True,
             "blocksMovement": True,
         },
 
-        # Scattered cover
-        {
-            "position": {"x": 8, "y": 0.75, "z": 8},
-            "width": 2,
-            "height": 1.5,
-            "depth": 2,
-            "material": "stone",
-            "blocksVision": True,
-            "blocksMovement": True,
-        },
-        {
-            "position": {"x": -8, "y": 0.75, "z": -8},
-            "width": 2,
-            "height": 1.5,
-            "depth": 2,
-            "material": "wood",
-            "blocksVision": True,
-            "blocksMovement": True,
-        },
-        {
-            "position": {"x": -8, "y": 0.75, "z": 8},
-            "width": 2,
-            "height": 1.5,
-            "depth": 2,
-            "material": "concrete",
-            "blocksVision": True,
-            "blocksMovement": True,
-        },
-        {
-            "position": {"x": 8, "y": 0.75, "z": -8},
-            "width": 2,
-            "height": 1.5,
-            "depth": 2,
-            "material": "rustedMetal",
-            "blocksVision": True,
-            "blocksMovement": True,
-        },
+        # ─────────────────────────
+        # Side structures
+        # ─────────────────────────
 
-        # Low barriers — block movement, not vision
         {
-            "position": {"x": 0, "y": 0.3, "z": 12},
-            "width": 6,
-            "height": 0.6,
-            "depth": 0.5,
-            "material": "wood",
-            "blocksVision": False,
-            "blocksMovement": True,
-        },
-        {
-            "position": {"x": 0, "y": 0.3, "z": -12},
-            "width": 6,
-            "height": 0.6,
-            "depth": 0.5,
-            "material": "metal",
-            "blocksVision": False,
-            "blocksMovement": True,
-        },
-
-        # Tall thin pillars — good hiding spots
-        {
-            "position": {"x": 15, "y": 1.5, "z": 0},
+            "position": {"x": -10, "y": 1, "z": 0},
             "width": 1,
-            "height": 3,
-            "depth": 1,
-            "material": "concrete",
-            "blocksVision": True,
-            "blocksMovement": True,
-        },
-        {
-            "position": {"x": -15, "y": 1.5, "z": 0},
-            "width": 1,
-            "height": 3,
-            "depth": 1,
-            "material": "stone",
-            "blocksVision": True,
-            "blocksMovement": True,
-        },
-        {
-            "position": {"x": 0, "y": 1.5, "z": 15},
-            "width": 1,
-            "height": 3,
-            "depth": 1,
-            "material": "brick",
-            "blocksVision": True,
-            "blocksMovement": True,
-        },
-        {
-            "position": {"x": 0, "y": 1.5, "z": -15},
-            "width": 1,
-            "height": 3,
-            "depth": 1,
-            "material": "rustedMetal",
-            "blocksVision": True,
-            "blocksMovement": True,
-        },
-
-        # A maze-like corner
-        {
-            "position": {"x": 12, "y": 1, "z": 12},
-            "width": 4,
             "height": 2,
-            "depth": 0.5,
+            "depth": 8,
             "material": "concrete",
             "blocksVision": True,
             "blocksMovement": True,
         },
         {
-            "position": {"x": 14, "y": 1, "z": 10},
-            "width": 0.5,
+            "position": {"x": 10, "y": 1, "z": 0},
+            "width": 1,
+            "height": 2,
+            "depth": 8,
+            "material": "stone",
+            "blocksVision": True,
+            "blocksMovement": True,
+        },
+
+        # ─────────────────────────
+        # Interior cover
+        # ─────────────────────────
+
+        {
+            "position": {"x": -5, "y": 1, "z": -1},
+            "width": 2,
             "height": 2,
             "depth": 4,
             "material": "brick",
+            "blocksVision": True,
+            "blocksMovement": True,
+        },
+        {
+            "position": {"x": 5, "y": 1, "z": 1},
+            "width": 2,
+            "height": 2,
+            "depth": 4,
+            "material": "concrete",
+            "blocksVision": True,
+            "blocksMovement": True,
+        },
+
+        # ─────────────────────────
+        # Low cover
+        # ─────────────────────────
+
+        {
+            "position": {"x": -4, "y": 0.5, "z": 7},
+            "width": 3,
+            "height": 1,
+            "depth": 1,
+            "material": "wood",
+            "blocksVision": True,
+            "blocksMovement": True,
+        },
+        {
+            "position": {"x": 4, "y": 0.5, "z": -7},
+            "width": 3,
+            "height": 1,
+            "depth": 1,
+            "material": "metal",
+            "blocksVision": True,
+            "blocksMovement": True,
+        },
+
+        # ─────────────────────────
+        # Corner structures
+        # ─────────────────────────
+
+        {
+            "position": {"x": -13, "y": 1, "z": -10},
+            "width": 5,
+            "height": 2,
+            "depth": 1,
+            "material": "rustedMetal",
+            "blocksVision": True,
+            "blocksMovement": True,
+        },
+        {
+            "position": {"x": 13, "y": 1, "z": -10},
+            "width": 5,
+            "height": 2,
+            "depth": 1,
+            "material": "brick",
+            "blocksVision": True,
+            "blocksMovement": True,
+        },
+        {
+            "position": {"x": -13, "y": 1, "z": 10},
+            "width": 5,
+            "height": 2,
+            "depth": 1,
+            "material": "stone",
+            "blocksVision": True,
+            "blocksMovement": True,
+        },
+        {
+            "position": {"x": 13, "y": 1, "z": 10},
+            "width": 5,
+            "height": 2,
+            "depth": 1,
+            "material": "concrete",
             "blocksVision": True,
             "blocksMovement": True,
         },
