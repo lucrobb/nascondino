@@ -7,7 +7,7 @@ interface TerrainPieceProps {
     onRegisterRef: (mesh: Mesh | null) => void;
 }
 
-export function TerrainPiece({ terrain, onRegisterRef }: TerrainPieceProps) {
+function TerrainPiece({ terrain, onRegisterRef }: TerrainPieceProps) {
     return (
         <mesh
             ref={onRegisterRef}
@@ -17,7 +17,7 @@ export function TerrainPiece({ terrain, onRegisterRef }: TerrainPieceProps) {
         >
             <boxGeometry args={[terrain.width, terrain.height, terrain.depth]} />
             <meshStandardMaterial
-                color="#858585"
+                color="#777773"
                 roughness={0.9}
                 metalness={0}
             />
@@ -26,24 +26,24 @@ export function TerrainPiece({ terrain, onRegisterRef }: TerrainPieceProps) {
 }
 
 
-
-
 interface GroundProps {
     onRegisterRef: (mesh: Mesh | null) => void;
     terrain: Terrain[];
+    worldSize: number;
 }
 
-export function Ground({ onRegisterRef, terrain }: GroundProps) {
+export function Ground({ onRegisterRef, terrain, worldSize }: GroundProps) {
     return (
         <>
             <mesh ref={onRegisterRef} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-                <planeGeometry args={[100, 100]} />
+                <planeGeometry args={[worldSize, worldSize]} />
                 <meshStandardMaterial
-                    color="#858585"
+                    color="#777773"
                     roughness={0.9}
                     metalness={0}
                 />
             </mesh>
+            
             {terrain.map((t, i) => (
                 <TerrainPiece key={i} terrain={t} onRegisterRef={onRegisterRef} />
             ))}

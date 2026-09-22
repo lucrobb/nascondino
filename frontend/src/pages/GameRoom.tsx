@@ -62,9 +62,6 @@ export default function GameRoom() {
     const facing = useRef<FacingAngles | null>(null);
     const [otherPlayers, setOtherPlayers] = useState<OtherPlayer[]>([]);
 
-    const PLAYER_HEIGHT = 1;
-    const MAX_DISTANCE = 15;
-
     const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
     const [menuOpen, setMenuOpen] = useState<boolean>(false);
 
@@ -172,6 +169,13 @@ export default function GameRoom() {
     
 
 
+    const PLAYER_HEIGHT = 1;
+    const MAX_DISTANCE = 15;
+    const WORLD_SKY = "#aaa79f";
+    const WORLD_FOG = "#8f8d87";
+    const WORLD_SIZE = 100;
+
+
     return (
         <div className="h-screen w-screen relative">
             <NameInput
@@ -209,7 +213,6 @@ export default function GameRoom() {
                             />
 
                             <Canvas
-                                style={{ background: "#2a2a2a" }}
                                 camera={{
                                     position: [
                                         position.current!.x,
@@ -220,7 +223,8 @@ export default function GameRoom() {
                                     near: 0.1,
                                     far: 1000,
                                 }}
-                                >
+                            >
+                                <color attach="background" args={[WORLD_SKY]} />
                                 <PointerLockControls />
                                 <PlayerController
                                     facing={facing}
@@ -235,8 +239,8 @@ export default function GameRoom() {
                                     onCapture={wsSend.captureTarget}
                                 />
                                 <Lights />
-                                <SceneFog maxDistance={MAX_DISTANCE} />
-                                <Ground onRegisterRef={registerTerrain} terrain={terrain}/>
+                                <SceneFog maxDistance={MAX_DISTANCE} fogColor={WORLD_FOG}/>
+                                <Ground onRegisterRef={registerTerrain} terrain={terrain} worldSize={WORLD_SIZE}/>
                                 <Obstacles obstacles={obstacles} />
                                 <Players players={otherPlayers} playerHeight={PLAYER_HEIGHT}/>
                             </Canvas>

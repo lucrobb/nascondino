@@ -16,74 +16,74 @@ interface Material {
 
 const MATERIALS: Record<MaterialType, Material> = {
     concrete: {
-        color: "#808080",
-        roughness: 0.9,
+        color: "#777773",
+        roughness: 0.92,
         metalness: 0,
     },
 
     brick: {
-        color: "#9a4f3f",
+        color: "#81483d",
         roughness: 0.9,
         metalness: 0,
     },
 
     stone: {
-        color: "#77756e",
-        roughness: 0.95,
+        color: "#6f6e68",
+        roughness: 0.96,
         metalness: 0,
     },
 
     wood: {
-        color: "#765438",
-        roughness: 0.8,
+        color: "#6d513b",
+        roughness: 0.86,
         metalness: 0,
     },
 
     metal: {
-        color: "#62676b",
-        roughness: 0.3,
+        color: "#4f5355",
+        roughness: 0.35,
         metalness: 0.8,
     },
 
     rustedMetal: {
-        color: "#7a4030",
-        roughness: 0.85,
-        metalness: 0.4,
+        color: "#714338",
+        roughness: 0.88,
+        metalness: 0.45,
     },
 
     glass: {
-        color: "#b8d8dc",
-        roughness: 0.1,
+        color: "#aebfc0",
+        roughness: 0.12,
         metalness: 0,
     },
 
     grass: {
-        color: "#587a3d",
+        color: "#59644b",
         roughness: 1,
         metalness: 0,
     },
 
     dirt: {
-        color: "#705438",
+        color: "#685442",
         roughness: 1,
         metalness: 0,
     },
 
     sand: {
-        color: "#c8b27a",
+        color: "#a99a78",
         roughness: 1,
         metalness: 0,
     },
 
     gravel: {
-        color: "#77736b",
+        color: "#686761",
         roughness: 1,
         metalness: 0,
     },
 
     asphalt: {
-        color: "#353535",
-        roughness: 0.9,
+        color: "#303131",
+        roughness: 0.94,
         metalness: 0,
     },
 };

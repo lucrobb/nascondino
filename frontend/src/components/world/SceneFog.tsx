@@ -5,15 +5,16 @@ import { Fog } from "three";
 
 interface SceneFogProps {
     maxDistance: number;
+    fogColor: string;
 }
 
-export function SceneFog({ maxDistance }: SceneFogProps) {
+export function SceneFog({ maxDistance, fogColor }: SceneFogProps) {
     const { scene } = useThree();
 
     useEffect(() => {
         scene.fog = new Fog(
-            "#2a2a2a",
-            maxDistance * 0.1,
+            fogColor,
+            maxDistance * 0.5,
             maxDistance
         );
         return () => {
