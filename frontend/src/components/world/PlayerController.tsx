@@ -9,13 +9,12 @@ interface PlayerControllerProps {
     playerHeight: number;
     obstacles: Obstacle[];
     groundRef: React.RefObject<THREE.Mesh[]>;
-    onReadyChange: (ready: boolean) => void;
     onMove: (position: Vector3, facing: FacingAngles) => void;
     isFound: boolean;
 }
 
 
-export function PlayerController({ facing, position, playerHeight, obstacles, groundRef, onReadyChange, onMove, isFound }: PlayerControllerProps): null {
+export function PlayerController({ facing, position, playerHeight, obstacles, groundRef, onMove, isFound }: PlayerControllerProps): null {
     const { camera } = useThree();
     const raycaster = useRef<THREE.Raycaster>(new THREE.Raycaster());
 
@@ -67,12 +66,6 @@ export function PlayerController({ facing, position, playerHeight, obstacles, gr
     }
 
     useEffect(() => {
-        position.current = getPosition();
-        facing.current = getFacing();
-
-        //User now has all data necessary to be added to the game room on the backend
-        onReadyChange(true);
-
         //Add key event listeners for movement
         function onKeyDown(e: KeyboardEvent) {
             switch (e.code) {
@@ -98,7 +91,23 @@ export function PlayerController({ facing, position, playerHeight, obstacles, gr
         };
     }, []);
 
+    //Assign facing when necessary (like when server-assigned)
+    const initializedFacing = useRef<boolean>(false);
+
     useFrame((_, delta) => {
+      if (facing.current && !initializedFacing.current){
+        const { horizontal, vertical } = facing.current;
+
+        const direction = new THREE.Vector3(
+            Math.cos(vertical) * Math.cos(horizontal),
+            Math.sin(vertical),
+            Math.cos(vertical) * Math.sin(horizontal)
+        );
+
+        camera.lookAt(camera.position.clone().add(direction));
+        initializedFacing.current = true;
+      }
+
         const { forward, backward, left, right} = moveState.current;
         timeSinceLastSend.current += delta;
 

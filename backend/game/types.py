@@ -30,6 +30,7 @@ class Obstacle:
 
         self.blocks_vision = obstacle["blocksVision"]
         self.blocks_movement = obstacle["blocksMovement"]
+        self.material = obstacle["material"]
 
     def to_dict(self) -> dict:
         return {
@@ -60,43 +61,47 @@ class Terrain:
 
     def to_dict(self) -> dict:
         return {
-            "position": {
-                "x": self.position.x,
-                "y": self.position.x,
-                "z": self.position.z
-            },
-            "rotation": {
-                "x": self.rotation.x,
-                "y": self.rotation.y,
-                "z": self.rotation.z
-            },
+            "position": self.position.to_dict(),
+            "rotation": self.rotation.to_dict(),
             "width": self.width,
             "height": self.height,
             "depth": self.depth
         }
 
 class Player:
-    def __init__(self, player: dict):
-        self.position = Position(
-            x=player["position"]["x"],
-            y=player["position"]["y"],
-            z=player["position"]["z"]
-        )
-        self.facing = FacingAngles(
-            horizontal=player["facing"]["horizontal"],
-            vertical=player["facing"]["vertical"]
-        )
+    def __init__(
+        self,
+        name: str,
+        position: Position,
+        facing: FacingAngles,
+        is_hunter: bool,
+        is_found: bool,
+    ):
+        self.position = position
+        self.facing = facing
 
-        self.name = player["name"]
+        self.name = name
 
-        self.is_hunter = player["isHunter"]
-        self.is_found = player["isFound"]
+        self.is_hunter = is_hunter
+        self.is_found = is_found
 
         self.disconnect_task = None
         self.connected = True
         self.is_creator = False
 
-    def to_dict(self) -> dict:
+    def to_dict_for_initialization(self) -> dict:
+        return {
+            "name": self.name,
+            "isHunter": self.is_hunter,
+            "isFound": self.is_found,
+            "isCreator": self.is_creator
+        }
+    def to_dict_for_user_state(self) -> dict:
+        return {
+            "isHunter": self.is_hunter,
+            "isFound": self.is_found
+        }
+    def to_dict_for_others(self) -> dict:
         return {
             "name": self.name,
             "position": self.position.to_dict(),
