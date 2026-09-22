@@ -25,7 +25,8 @@ import { Players } from '../components/world/Players';
 
 import { GameUi } from '../components/world/GameUi';
 import { NameInput } from '../components/world/NameInput';
-import { MenuDialog } from '@/components/world/MenuDialog';
+import { MenuDialog } from '../components/world/MenuDialog';
+import { SceneFog } from '../components/world/SceneFog';
 
 
 export default function GameRoom() {
@@ -61,6 +62,7 @@ export default function GameRoom() {
     const [otherPlayers, setOtherPlayers] = useState<OtherPlayer[]>([]);
 
     const PLAYER_HEIGHT = 1;
+    const MAX_DISTANCE = 15;
 
     const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
     const [menuOpen, setMenuOpen] = useState<boolean>(false);
@@ -93,7 +95,6 @@ export default function GameRoom() {
             const data: ServerMessage = JSON.parse(event.data);
 
             if (data.type === "initial_state") {
-                console.log("INITIAL STATE:", data);
 
                 setObstacles(data.lobby.obstacles);
                 setTerrain(data.lobby.terrain);
@@ -181,7 +182,7 @@ export default function GameRoom() {
             {name && (
                 <>
                     <div className="pointer-events-none fixed inset-0 flex items-center justify-center z-10">
-                        <div className="w-3 h-3 rounded-full bg-primary" />
+                        <div className="w-2 h-2 rounded-full bg-primary" />
                     </div>
 
                     {initialized && player && status && (
@@ -206,6 +207,7 @@ export default function GameRoom() {
                             />
 
                             <Canvas
+                                style={{ background: "#2a2a2a" }}
                                 camera={{
                                     position: [
                                         position.current!.x,
@@ -231,6 +233,7 @@ export default function GameRoom() {
                                     onCapture={wsSend.captureTarget}
                                 />
                                 <Lights />
+                                <SceneFog maxDistance={MAX_DISTANCE} />
                                 <Ground onRegisterRef={registerTerrain} terrain={terrain}/>
                                 <Obstacles obstacles={obstacles} />
                                 <Players players={otherPlayers} playerHeight={PLAYER_HEIGHT}/>

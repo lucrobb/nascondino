@@ -30,6 +30,7 @@ class Obstacle:
 
         self.blocks_vision = obstacle["blocksVision"]
         self.blocks_movement = obstacle["blocksMovement"]
+        self.material = obstacle["material"]
 
     def to_dict(self) -> dict:
         return {

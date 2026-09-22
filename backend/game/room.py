@@ -70,7 +70,7 @@ class Room:
                 continue
             
             #We return the players excluding the user
-            other_players = players[:player_idx] + players[player_idx + 1:] if player_idx else players
+            other_players = players[:player_idx] + players[player_idx + 1:]
             await self.send_to_consumer(
                 pid, 
                 "room.message", 

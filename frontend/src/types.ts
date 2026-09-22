@@ -15,6 +15,20 @@ export interface Movement {
     right: boolean;
 }
 
+export type MaterialType =
+    | "concrete"
+    | "brick"
+    | "stone"
+    | "wood"
+    | "metal"
+    | "rustedMetal"
+    | "glass"
+    | "grass"
+    | "dirt"
+    | "sand"
+    | "gravel"
+    | "asphalt";
+
 export interface Obstacle {
     position: Vector3
     width: number
@@ -22,7 +36,8 @@ export interface Obstacle {
     depth: number
 
     blocksVision: boolean
-    blocksMovement: boolean
+    blocksMovement: boolean;
+    material: MaterialType; 
 }
 export interface Terrain {
     position: Vector3;
