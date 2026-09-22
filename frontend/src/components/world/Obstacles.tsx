@@ -93,7 +93,7 @@ interface ObstacleProps {
 }
 
 export function Obstacle({ obstacle }: ObstacleProps) {
-    const material = MATERIALS[obstacle.material];
+    const material: Material = MATERIALS[obstacle.material] ?? MATERIALS["concrete"];
 
     return (
         <mesh
