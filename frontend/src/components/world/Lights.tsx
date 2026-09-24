@@ -15,11 +15,13 @@ export function Lights() {
                 position={[15, 25, 10]}
                 intensity={1.4}
                 castShadow
-                shadow-mapSize={[2048, 2048]}
-                shadow-camera-left={-50}
-                shadow-camera-right={50}
-                shadow-camera-top={50}
-                shadow-camera-bottom={-50}
+                shadow-mapSize={[4096, 4096]}
+                shadow-camera-left={-30}
+                shadow-camera-right={30}
+                shadow-camera-top={30}
+                shadow-camera-bottom={-30}
+                shadow-camera-near={0.1}
+                shadow-camera-far={100}
             />
         </>
     );

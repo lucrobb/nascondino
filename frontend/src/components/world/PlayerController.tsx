@@ -99,6 +99,7 @@ export function PlayerController({ facing, position, playerHeight, obstacles, gr
         const { horizontal, vertical } = facing.current;
 
         const direction = new THREE.Vector3(
+            //Importano le proporzioni per la direzione, consideriamo lati come sin e cos direttamente senza applicare dimensioni reali
             Math.cos(vertical) * Math.cos(horizontal),
             Math.sin(vertical),
             Math.cos(vertical) * Math.sin(horizontal)

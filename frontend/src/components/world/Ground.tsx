@@ -17,8 +17,8 @@ function TerrainPiece({ terrain, onRegisterRef }: TerrainPieceProps) {
         >
             <boxGeometry args={[terrain.width, terrain.height, terrain.depth]} />
             <meshStandardMaterial
-                color="#777773"
-                roughness={0.9}
+                color="#85827b"
+                roughness={0.92}
                 metalness={0}
             />
         </mesh>
