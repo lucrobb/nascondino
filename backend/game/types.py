@@ -39,7 +39,8 @@ class Obstacle:
             "height": self.height,
             "depth": self.depth,
             "blocksVision": self.blocks_vision,
-            "blocksMovement": self.blocks_movement
+            "blocksMovement": self.blocks_movement,
+            "material": self.material
         }
 
 class Terrain:

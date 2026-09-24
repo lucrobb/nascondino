@@ -1,4 +1,4 @@
-from .types import Player, Position, FacingAngles
+from .types import Player, Position, FacingAngles, Obstacle, Terrain
 import random
 from .vision import Vision
 from .constants import ROUND_DURATION
@@ -21,8 +21,8 @@ class Room:
         self.players: dict[str, Player] = {}
         self.player_channels: dict[str, str] = {}
 
-        self.obstacles: list[dict] = lobby.obstacles
-        self.terrain: list[dict] = lobby.terrain
+        self.obstacles: list[Obstacle] = [Obstacle(obstacle) for obstacle in lobby.obstacles]
+        self.terrain: list[Terrain] = [Terrain(terrain) for terrain in lobby.terrain]
         self.spawn_position: Position = Position(**lobby.spawn_position)
 
         self.status = "waiting"
@@ -100,8 +100,8 @@ class Room:
             {
                 "type": "initial_state",
                 "lobby": {
-                    "obstacles": self.obstacles,
-                    "terrain": self.terrain,
+                    "obstacles": [obstacle.to_dict() for obstacle in self.obstacles],
+                    "terrain": [terrain.to_dict() for terrain in self.terrain],
                     "status": self.status
                 },
                 "player": player.to_dict_for_initialization(),

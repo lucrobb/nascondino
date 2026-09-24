@@ -213,7 +213,7 @@ export default function GameRoom() {
                             />
 
                             <Canvas
-                                shadows="soft"
+                                shadows
                                 camera={{
                                     position: [
                                         position.current!.x,
