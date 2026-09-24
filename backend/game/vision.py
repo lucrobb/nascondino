@@ -152,12 +152,6 @@ class Vision:
             if dist <= self.max_distance:
                 obstacles.append((dist, obstacle))
 
-        players = []
-        for player in self.players:
-            dist = math.hypot(player.position.x - self.x, player.position.y - self.y, player.position.z - self.z)
-            if dist <= self.max_distance:
-                players.append((dist, "player", player))
-
         #We sort in order of distance, because we cannot consider more distant obstacles as such for the target player
         obstacles.sort(key=lambda o: o[0])
 
