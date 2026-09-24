@@ -4,6 +4,7 @@ import { createLobby } from '../api/lobbies';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { ApiError } from '../api/helper';
+import { LoadingScreen } from '../components/world/LoadingScreen';
 
 export default function LobbyBuilder() {
     const navigate = useNavigate();
@@ -24,6 +25,6 @@ export default function LobbyBuilder() {
     }, [])
 
     return (
-        <></>
+        <LoadingScreen message="Creazione della lobby in corso" />
     )
 }

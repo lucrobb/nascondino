@@ -64,6 +64,7 @@ export default function GameRoom() {
 
     const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
     const [menuOpen, setMenuOpen] = useState<boolean>(false);
+    const [captureFeedback, setCaptureFeedback] = useState<string | null>(null);
 
     const socketRef = useRef<WebSocket | null>(null);
     //Class storing all websocket client messages to send to the server
@@ -118,8 +119,17 @@ export default function GameRoom() {
             }
 
             else if (data.type === "capture_result") {
-                if (data.success) toast.success(`Hai catturato ${data.targetName}!`);
-                else toast.error(`Ti è sfuggit* ${data.targetName}!`)
+                if (data.success) {
+                    setCaptureFeedback(`Hai catturato ${data.targetName}`);
+                    setTimeout(() => {
+                        setCaptureFeedback(null);
+                    }, 1100);
+                } else {
+                    setCaptureFeedback(`Ti è sfuggit* ${data.targetName}`);
+                    setTimeout(() => {
+                        setCaptureFeedback(null);
+                    }, 1100);
+                }
             }
 
             else if (data.type === "game_over") {
@@ -186,9 +196,6 @@ export default function GameRoom() {
             />
             {name && (
                 <>
-                    <div className="pointer-events-none fixed inset-0 flex items-center justify-center z-10">
-                        <div className="w-2 h-2 rounded-full bg-primary" />
-                    </div>
                     {!initialized && <LoadingScreen message="Caricamento della partita" />}
 
                     {initialized && player && status && (
@@ -210,6 +217,7 @@ export default function GameRoom() {
                                 player={player}
                                 onNavigate={navigate}
                                 onWsSend={wsSend}
+                                captureFeedback={captureFeedback}
                             />
 
                             <Canvas
