@@ -3,6 +3,7 @@ import { useThree, useFrame } from "@react-three/fiber"
 import * as THREE from "three";
 import { useEffect, useRef } from 'react';
 
+
 interface PlayerControllerProps {
     facing: React.RefObject<FacingAngles | null>;
     position: React.RefObject<Vector3 | null>;
@@ -17,6 +18,7 @@ interface PlayerControllerProps {
 export function PlayerController({ facing, position, playerHeight, obstacles, groundRef, onMove, isFound }: PlayerControllerProps): null {
     const { camera } = useThree();
     const raycaster = useRef<THREE.Raycaster>(new THREE.Raycaster());
+    const yVelocity = useRef<number>(0);
 
     const MOVE_SPEED: number = 5;
 
@@ -161,7 +163,18 @@ export function PlayerController({ facing, position, playerHeight, obstacles, gr
             )
             const hits = raycaster.current.intersectObjects(groundRef.current, true);
             if (hits.length > 0) {
-                camera.position.y = hits[0].point.y + playerHeight;
+                const groundY = hits[0].point.y;
+                const targetY = groundY + playerHeight;
+
+                yVelocity.current += -9.81 * delta;
+                camera.position.y = Math.max(
+                    camera.position.y + yVelocity.current * delta,
+                    targetY
+                );
+
+                if (camera.position.y === targetY) {
+                    yVelocity.current = 0;
+                }
             }
 
             position.current = getPosition();
