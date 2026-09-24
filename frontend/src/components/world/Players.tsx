@@ -67,7 +67,7 @@ interface PlayersProps {
 export function Players({ players, playerHeight }: PlayersProps) {
     return (
         <>
-            {players.map((p) => (
+            {players.map((p) => !p.isFound && (
                 <Player key={p.id} player={p} playerHeight={playerHeight}/>
             ))}
         </>
