@@ -208,6 +208,7 @@ class Room:
         if self.status != "in_progress":
             return
         self.status = "ended"
+        winner = "hunters" if self.hunters_won() else "hiders"
         if self.timer_task and not self.timer_task.done():
             self.timer_task.cancel()
 
@@ -217,7 +218,7 @@ class Room:
 
         await self.broadcast("room.message", {
             "type": "game_over",
-            "winner": "hunters" if self.hunters_won() else "hiders",
+            "winner": winner
         })
         await self.broadcast_state()
 
