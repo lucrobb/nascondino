@@ -110,3 +110,9 @@ class Player:
             "isHunter": self.is_hunter,
             "isFound": self.is_found
         }
+
+class Dimension:
+    def __init__(self, width: float, height: float, depth: float):
+        self.width = width
+        self.height = height
+        self.depth = depth

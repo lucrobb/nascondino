@@ -1,5 +1,5 @@
 import math
-from .types import Obstacle, Player
+from .types import Obstacle, Player, Position, Dimension
 from . import constants 
         
 
@@ -30,17 +30,17 @@ class Vision:
         #Construct tan like normal, keep range in [-180, 180]
         return math.atan2(math.sin(angle - facing), math.cos(angle - facing)) 
 
-    def angle_range_from(self, obstacle: Obstacle) -> tuple[float, float, float, float]:
+    def angle_range_from(self, center: Position, dimensions: Dimension) -> tuple[float, float, float, float]:
         #we return the angle interval for both horizontal and vertical FOV
 
         #half of the shape's lengths, to allow to easily calculate superficial coordinate from center
-        dw = obstacle.width / 2
-        dh = obstacle.height / 2
-        dd = obstacle.depth / 2
+        dw = dimensions.width / 2
+        dh = dimensions.height / 2
+        dd = dimensions.depth / 2
 
-        xs = (obstacle.position.x - dw, obstacle.position.x + dw)
-        ys = (obstacle.position.y - dh, obstacle.position.y + dh)
-        zs = (obstacle.position.z - dd, obstacle.position.z + dd)
+        xs = (center.x - dw, center.x + dw)
+        ys = (center.y - dh, center.y + dh)
+        zs = (center.z - dd, center.z + dd)
 
 
         hor_angles = []
@@ -59,9 +59,8 @@ class Vision:
                         self.hor_facing
                     )
 
-                    horizontal_distance = math.hypot(dx, dz)
                     vertical = self.relative_angle(
-                        math.atan2(dy, horizontal_distance),
+                        math.atan2(dy, math.hypot(dx, dz)),
                         self.ver_facing
                     )
 
@@ -132,7 +131,8 @@ class Vision:
         #Check if the target player is visible to the hunter 
 
         target_dist = math.hypot(
-            target.position.x - self.x, target.position.y - self.y, target.position.z - self.z
+            #We subtract 0.5 from the y because that is half of the height, so now the position represents the center
+            target.position.x - self.x, target.position.y - 0.5 - self.y, target.position.z - self.z
         )
         if target_dist > self.max_distance:
             return False
@@ -157,9 +157,9 @@ class Vision:
 
         #left and right horizontal angle extremities, bottom and top vertical angle extremities, is obstacle
         regions = [(-self.hor_fov / 2, self.hor_fov / 2, -self.ver_fov / 2, self.ver_fov / 2, False)] 
-        dx, dy, dz = target.position.x - self.x, target.position.y - self.y, target.position.z - self.z
-        hor_angle = self.relative_angle(math.atan2(dz, dx), self.hor_facing)
-        ver_angle = self.relative_angle(math.atan2(dy, math.hypot(dx, dz)), self.ver_facing)
+
+        target_position = Position(target.position.x, target.position.y - 0.5, target.position.z)
+        player_h_start, player_h_end, player_v_start, player_v_end = self.angle_range_from(target_position, Dimension(0.5, 1, 0.5))
 
         for dist, obstacle in obstacles:
             if dist >= target_dist:
@@ -167,19 +167,24 @@ class Vision:
                 break
 
             #The angle spans from the current position
-            angle_box = self.angle_range_from(obstacle)
+            angle_box = self.angle_range_from(obstacle.position, Dimension(obstacle.width, obstacle.height, obstacle.depth))
             new_regions = []
             for region in regions:
                 #Split the regions into obstructed and visible fragments
                 new_regions += self.split_region(region, angle_box)
             regions = new_regions
 
-        for h_start, h_end, v_start, v_end, is_obstacle in regions:
+        for region_h_start, region_h_end, region_v_start, region_v_end, is_obstacle in regions:
             if is_obstacle:
                 continue
 
             #Target finds itself within the limits of a visible region
-            if h_start <= hor_angle <= h_end and v_start <= ver_angle <= v_end:
+            if (
+                player_h_start < region_h_end 
+                and player_h_end > region_h_start
+                and player_v_start < region_v_end
+                and player_v_end > region_v_start
+            ):
                 return True
 
         return False

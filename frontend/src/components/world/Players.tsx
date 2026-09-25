@@ -42,13 +42,13 @@ function Player({ player, playerHeight }: PlayerProps) {
     const color = player.isHunter ? "#e04300" : "#ccff99"
 
     return (
-        //The y of player positions is the top pf the avatar, we need to subtract the player height
+        //The y of player positions is the top of the avatar, we need to subtract the player height
         <group ref={playerRef}>
-            <mesh position={[0, -playerHeight + 0.875, 0]} userData={{ playerId: player.id }}>
+            <mesh position={[0, -playerHeight + 0.75, 0]} userData={{ playerId: player.id }}>
                 <sphereGeometry args={[0.25]} />
                 <meshStandardMaterial color={color} />
             </mesh>
-            <mesh position={[0, -playerHeight + 0.25, 0]}>
+            <mesh position={[0, -playerHeight + 0.25, 0]} userData={{ playerId: player.id }}>
                 <boxGeometry args={[0.5, 0.5, 0.5]} />
                 <meshStandardMaterial color={color} />
             </mesh>
