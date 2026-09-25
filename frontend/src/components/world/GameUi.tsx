@@ -128,27 +128,17 @@ export function GameUi({
                 </div>
             )}
 
-            {/* Found transition */}
+            {/* Found state */}
             {playerWasFound && (
-                <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-background/45 backdrop-blur-[2px] animate-found-screen">
-                    <div className="mx-6 w-full max-w-md text-center">
-                        <div className="mb-5 flex items-center justify-center gap-3">
-                            <span className="h-px w-12 bg-destructive/60" />
-
-                            <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-destructive">
-                                Eliminato
-                            </span>
-
-                            <span className="h-px w-12 bg-destructive/60" />
+                <div className="pointer-events-none fixed inset-x-0 top-24 z-30 flex justify-center">
+                    <div className="animate-found-screen rounded-md border border-destructive/40 bg-background/85 px-6 py-3 text-center shadow-xl backdrop-blur-md">
+                        <div className="text-2xl font-bold uppercase tracking-[0.12em] text-destructive">
+                            TROVATO
                         </div>
 
-                        <h2 className="text-5xl font-semibold uppercase tracking-[0.12em]">
-                            Sei stat* trovat*
-                        </h2>
-
-                        <p className="mt-4 text-sm uppercase tracking-[0.14em] text-muted-foreground">
-                            Non puoi più nasconderti
-                        </p>
+                        <div className="mt-1 text-xs uppercase tracking-wider text-muted-foreground">
+                            Ora sei fuori dalla caccia
+                        </div>
                     </div>
                 </div>
             )}
