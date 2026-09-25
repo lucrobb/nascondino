@@ -25,68 +25,108 @@ export function GameUi({
     const formattedTime =
         timeRemaining !== null
             ? `${Math.floor(timeRemaining / 60)}:${String(
-                  timeRemaining % 60
+                  Math.floor(timeRemaining % 60)
               ).padStart(2, "0")}`
             : null;
 
     const gameEnded = status === "ended";
-    const playerWasFound = status === "in_progress" && player.isFound;
+    const playerWasFound =
+        status === "in_progress" && player.isFound;
+
+    const captureSucceeded =
+        captureFeedback !== null;
 
     return (
-        <>
-            {/* Crosshair */}
+        <div className="game-ui">
+
+            {/* ==================================================
+                CROSSHAIR
+            ================================================== */}
+
             {status === "in_progress" && !playerWasFound && (
-                <div className="pointer-events-none fixed inset-0 z-10 flex items-center justify-center">
+                <div className="game-crosshair" aria-hidden="true">
+                    <span className="game-crosshair__line game-crosshair__line--top" />
+                    <span className="game-crosshair__line game-crosshair__line--right" />
+                    <span className="game-crosshair__line game-crosshair__line--bottom" />
+                    <span className="game-crosshair__line game-crosshair__line--left" />
+                    <span className="game-crosshair__dot" />
+                </div>
+            )}
+
+            {/* ==================================================
+                TOP LEFT — GAME STATUS
+            ================================================== */}
+
+            {status === "in_progress" && !playerWasFound && (
+                <div className="game-status">
                     <div
-                        className={`h-1.5 w-1.5 rounded-full transition-all duration-200 ${
-                            captureFeedback
-                                ? "scale-[3] bg-primary shadow-[0_0_20px_rgba(255,100,0,0.8)]"
-                                : "bg-primary"
+                        className={`game-status__role ${
+                            player.isHunter
+                                ? "game-status__role--hunter"
+                                : "game-status__role--hider"
                         }`}
-                    />
-                </div>
-            )}
+                    >
+                        <span className="game-status__indicator" />
 
-            {/* Top-right controls */}
-            {!gameEnded && (
-                <div className="fixed right-6 top-6 z-20 flex flex-col items-end gap-2">
-                    {player.isCreator && status !== "in_progress" && (
-                        <Button
-                            onClick={onWsSend.startGame}
-                            className="h-10 rounded-md border border-primary/20 px-4 uppercase tracking-wide shadow-lg shadow-black/5"
-                        >
-                            Inizia partita
-                            <Kbd className="ml-3 border-0 bg-transparent px-0 text-current opacity-60">
-                                ⏎
-                            </Kbd>
-                        </Button>
-                    )}
-                </div>
-            )}
-
-            {/* Timer */}
-            {status === "in_progress" && !playerWasFound && (
-                <div className="pointer-events-none fixed right-6 top-6 z-20">
-                    <div className="rounded-md border border-border/80 bg-background/75 px-4 py-2.5 shadow-lg shadow-black/5 backdrop-blur-md">
-                        <div className="flex items-baseline gap-2">
-                            <span className="font-mono text-xl font-medium tabular-nums tracking-tight">
-                                {formattedTime}
-                            </span>
-                        </div>
+                        <span>
+                            {player.isHunter
+                                ? "Cacciatore"
+                                : "Nascost*"}
+                        </span>
                     </div>
                 </div>
             )}
 
-            {/* Waiting */}
+            {/* ==================================================
+                TOP RIGHT — HOST CONTROL
+            ================================================== */}
+
+            {!gameEnded && player.isCreator && status !== "in_progress" && (
+                <div className="game-host-control">
+                    <Button
+                        onClick={onWsSend.startGame}
+                        className="game-start-button"
+                    >
+                        <span>Inizia partita</span>
+
+                        <Kbd className="game-start-button__kbd">
+                            ⏎
+                        </Kbd>
+                    </Button>
+                </div>
+            )}
+
+            {/* ==================================================
+                TOP RIGHT — TIMER
+            ================================================== */}
+
+            {status === "in_progress" && !playerWasFound && (
+                <div className="game-timer">
+                    <span className="game-timer__value">
+                        {formattedTime}
+                    </span>
+
+                    <span className="game-timer__label">
+                        tempo
+                    </span>
+                </div>
+            )}
+
+            {/* ==================================================
+                WAITING SCREEN
+            ================================================== */}
+
             {status === "waiting" && (
-                <div className="pointer-events-none fixed inset-x-0 top-0 z-20 flex justify-center px-6 pt-6">
-                    <div className="relative overflow-hidden rounded-md border border-border/80 bg-background/90 px-5 py-3 shadow-lg shadow-black/5 backdrop-blur-md">
-                        <div className="absolute inset-y-0 left-0 w-0.5 bg-primary" />
+                <div className="game-waiting">
+                    <div className="game-waiting__card">
+                        <span className="game-waiting__indicator" />
 
-                        <div className="flex items-center gap-3 pl-1">
-                            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+                        <div className="game-waiting__content">
+                            <span className="game-waiting__title">
+                                Lobby pronta
+                            </span>
 
-                            <span className="text-xs font-medium uppercase tracking-[0.12em]">
+                            <span className="game-waiting__message">
                                 {player.isCreator
                                     ? "In attesa che inizi la partita"
                                     : "In attesa che l'host inizi la partita"}
@@ -96,133 +136,157 @@ export function GameUi({
                 </div>
             )}
 
-            {/* Player role */}
+            {/* ==================================================
+                PLAYER ROLE — BOTTOM
+            ================================================== */}
+
             {status === "in_progress" && !playerWasFound && (
-                <div className="pointer-events-none fixed bottom-6 left-1/2 z-20 -translate-x-1/2">
+                <div className="game-role">
                     <div
-                        className={`flex items-center gap-2 rounded-md border px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] shadow-lg shadow-black/5 backdrop-blur-md ${
+                        className={`game-role__badge ${
                             player.isHunter
-                                ? "border-primary/30 bg-primary/95 text-primary-foreground"
-                                : "border-border/80 bg-background/80 text-foreground"
+                                ? "game-role__badge--hunter"
+                                : "game-role__badge--hider"
                         }`}
                     >
-                        <span
-                            className={`h-1.5 w-1.5 rounded-full ${
-                                player.isHunter
-                                    ? "bg-primary-foreground"
-                                    : "bg-primary"
-                            }`}
-                        />
+                        <span className="game-role__dot" />
 
-                        {player.isHunter ? "Cacciatore" : "Nascost*"}
+                        <span>
+                            {player.isHunter
+                                ? "Cacciatore"
+                                : "Nascost*"}
+                        </span>
                     </div>
                 </div>
             )}
 
-            {/* Hunter capture feedback */}
+            {/* ==================================================
+                CAPTURE FEEDBACK
+            ================================================== */}
+
             {captureFeedback && status === "in_progress" && (
-                <div className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center">
-                    <div className="animate-capture-event">
-                        <div className="flex flex-col items-center">
-                            <div className="mb-3 flex items-center gap-3">
-                                <span className="h-px w-10 bg-primary" />
+                <div
+                    className={`capture-feedback ${
+                        captureSucceeded
+                            ? "capture-feedback--success"
+                            : "capture-feedback--miss"
+                    }`}
+                >
+                    <div className="capture-feedback__flash" />
 
-                                <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-primary">
-                                    Bersaglio
-                                </span>
+                    <div className="capture-feedback__content">
 
-                                <span className="h-px w-10 bg-primary" />
-                            </div>
+                        <div className="capture-feedback__reticle">
+                            <span className="capture-feedback__reticle-ring" />
+                            <span className="capture-feedback__reticle-ring capture-feedback__reticle-ring--inner" />
 
-                            <div className="text-4xl font-semibold uppercase tracking-[0.18em] text-foreground drop-shadow-lg">
-                                Catturato
-                            </div>
+                            <span className="capture-feedback__reticle-line capture-feedback__reticle-line--top" />
+                            <span className="capture-feedback__reticle-line capture-feedback__reticle-line--right" />
+                            <span className="capture-feedback__reticle-line capture-feedback__reticle-line--bottom" />
+                            <span className="capture-feedback__reticle-line capture-feedback__reticle-line--left" />
 
-                            <div className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                {captureFeedback}
-                            </div>
+                            <span className="capture-feedback__reticle-center" />
+                        </div>
+
+                        <div className="capture-feedback__label">
+                            {captureSucceeded
+                                ? "CATTURATO"
+                                : "MANCATO"}
+                        </div>
+
+                        <div className="capture-feedback__target">
+                            {captureFeedback}
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* Found transition */}
+            {/* ==================================================
+                FOUND / ELIMINATED
+            ================================================== */}
+
             {playerWasFound && (
-                <div className="pointer-events-none fixed inset-0 z-40 flex items-center justify-center bg-background/45 backdrop-blur-[2px] animate-found-screen">
-                    <div className="mx-6 w-full max-w-md text-center">
-                        <div className="mb-5 flex items-center justify-center gap-3">
-                            <span className="h-px w-12 bg-destructive/60" />
+                <div className="found-screen">
+                    <div className="found-screen__vignette" />
+                    <div className="found-screen__scanlines" />
 
-                            <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-destructive">
-                                Eliminato
-                            </span>
+                    <div className="found-screen__content">
 
-                            <span className="h-px w-12 bg-destructive/60" />
+                        <div className="found-screen__symbol">
+                            <span className="found-screen__symbol-line found-screen__symbol-line--a" />
+                            <span className="found-screen__symbol-line found-screen__symbol-line--b" />
                         </div>
 
-                        <h2 className="text-5xl font-semibold uppercase tracking-[0.12em]">
-                            Sei stat* trovat*
+                        <div className="found-screen__eyebrow">
+                            ELIMINATO
+                        </div>
+
+                        <h2 className="found-screen__title">
+                            TROVATO
                         </h2>
 
-                        <p className="mt-4 text-sm uppercase tracking-[0.14em] text-muted-foreground">
+                        <p className="found-screen__subtitle">
                             Non puoi più nasconderti
                         </p>
+
                     </div>
                 </div>
             )}
 
-            {/* Game over */}
+            {/* ==================================================
+                GAME OVER
+            ================================================== */}
+
             {gameEnded && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 px-6 backdrop-blur-md animate-game-over">
-                    <div className="w-full max-w-lg text-center">
-                        <div className="mb-8 flex items-center justify-center gap-4">
-                            <span className="h-px flex-1 bg-border" />
+                <div className="game-over">
+                    <div className="game-over__backdrop" />
 
-                            <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground">
-                                Partita terminata
-                            </span>
+                    <div
+                        className={`game-over__panel ${
+                            winner === "hunters"
+                                ? "game-over__panel--hunters"
+                                : "game-over__panel--hiders"
+                        }`}
+                    >
+                        <div className="game-over__top-line" />
 
-                            <span className="h-px flex-1 bg-border" />
+                        <div className="game-over__eyebrow">
+                            PARTITA TERMINATA
                         </div>
 
-                        <div
-                            className={`mx-auto mb-6 h-2 w-2 rounded-full ${
-                                winner === "hunters"
-                                    ? "bg-primary shadow-[0_0_30px_rgba(255,100,0,0.7)]"
-                                    : "bg-foreground shadow-[0_0_30px_rgba(255,255,255,0.35)]"
-                            }`}
-                        />
+                        <div className="game-over__symbol">
+                            <span />
+                        </div>
 
-                        <p className="text-xs font-medium uppercase tracking-[0.25em] text-muted-foreground">
-                            Hanno vinto
-                        </p>
+                        <div className="game-over__winner-label">
+                            HANNO VINTO
+                        </div>
 
-                        <h1 className="mt-3 text-5xl font-semibold uppercase tracking-[0.12em]">
+                        <h1 className="game-over__title">
                             {winner === "hunters"
-                                ? "I cacciatori"
-                                : "I nascosti"}
+                                ? "I CACCIATORI"
+                                : "I NASCOSTI"}
                         </h1>
 
-                        <p className="mx-auto mt-5 max-w-sm text-sm leading-6 text-muted-foreground">
+                        <p className="game-over__description">
                             {winner === "hunters"
                                 ? "Tutti i giocatori nascosti sono stati trovati."
                                 : "Il tempo è scaduto prima che tutti i giocatori venissero trovati."}
                         </p>
 
-                        <div className="mt-10 flex justify-center">
-                            <Button
-                                onClick={() => onNavigate("/")}
-                                className="h-11 rounded-md px-6 uppercase tracking-[0.14em]"
-                            >
-                                Torna alla lobby
-                                <Kbd className="ml-3 border-0 bg-transparent px-0 text-current opacity-60">
-                                    ⌫
-                                </Kbd>
-                            </Button>
-                        </div>
+                        <Button
+                            onClick={() => onNavigate("/")}
+                            className="game-over__button"
+                        >
+                            <span>Torna alla lobby</span>
+
+                            <Kbd className="game-over__button-kbd">
+                                ⌫
+                            </Kbd>
+                        </Button>
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 }
