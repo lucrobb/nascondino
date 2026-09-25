@@ -2,5 +2,5 @@ import math
 
 HORIZONTAL_FOV = math.radians(90)
 VERTICAL_FOV = math.radians(75)
-MAX_VIEW_DISTANCE = 30.0
+MAX_VIEW_DISTANCE = 100.0
 ROUND_DURATION = 600
