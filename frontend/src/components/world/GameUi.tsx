@@ -116,25 +116,13 @@ export function GameUi({
             {/* Hunter capture feedback */}
             {captureFeedback && status === "in_progress" && (
                 <div className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center">
-                    <div className="animate-capture-event">
-                        <div className="flex flex-col items-center">
-                            <div className="mb-3 flex items-center gap-3">
-                                <span className="h-px w-10 bg-primary" />
+                    <div className="animate-capture-event rounded-lg border border-primary/50 bg-background/90 px-6 py-4 text-center shadow-2xl backdrop-blur-md">
+                        <div className="text-2xl font-bold uppercase tracking-wide text-primary">
+                            Catturato
+                        </div>
 
-                                <span className="text-[10px] font-medium uppercase tracking-[0.3em] text-primary">
-                                    Bersaglio
-                                </span>
-
-                                <span className="h-px w-10 bg-primary" />
-                            </div>
-
-                            <div className="text-4xl font-semibold uppercase tracking-[0.18em] text-foreground drop-shadow-lg">
-                                Catturato
-                            </div>
-
-                            <div className="mt-2 text-xs uppercase tracking-[0.16em] text-muted-foreground">
-                                {captureFeedback}
-                            </div>
+                        <div className="mt-1 text-sm text-muted-foreground">
+                            {captureFeedback}
                         </div>
                     </div>
                 </div>
