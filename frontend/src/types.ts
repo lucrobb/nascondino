@@ -9,10 +9,8 @@ export interface FacingAngles {
     vertical: number
 }
 export interface Movement {
-    forward: boolean;
-    backward: boolean;
-    left: boolean;
-    right: boolean;
+    forward: number;
+    strafe: number;
 }
 
 export type MaterialType =

@@ -11,11 +11,12 @@ interface PlayerControllerProps {
     obstacles: Obstacle[];
     groundRef: React.RefObject<THREE.Mesh[]>;
     onMove: (position: Vector3, facing: FacingAngles) => void;
+    moveState: React.RefObject<Movement>;
     isFound: boolean;
 }
 
 
-export function PlayerController({ facing, position, playerHeight, obstacles, groundRef, onMove, isFound }: PlayerControllerProps): null {
+export function PlayerController({ facing, position, playerHeight, obstacles, groundRef, onMove, moveState, isFound }: PlayerControllerProps): null {
     const { camera } = useThree();
     const raycaster = useRef<THREE.Raycaster>(new THREE.Raycaster());
     const yVelocity = useRef<number>(0);
@@ -24,13 +25,6 @@ export function PlayerController({ facing, position, playerHeight, obstacles, gr
 
     const timeSinceLastSend = useRef<number>(0);
     const SEND_INTERVAL: number = 1 / 15;
-
-    const moveState = useRef<Movement>({
-        forward: false,
-        backward: false,
-        left: false,
-        right: false
-    })
 
     function getFacing(): FacingAngles {
         const forward = new THREE.Vector3();
@@ -71,18 +65,18 @@ export function PlayerController({ facing, position, playerHeight, obstacles, gr
         //Add key event listeners for movement
         function onKeyDown(e: KeyboardEvent) {
             switch (e.code) {
-                case "KeyW": moveState.current.forward = true; break;
-                case "KeyS": moveState.current.backward = true; break;
-                case "KeyA": moveState.current.left = true; break;
-                case "KeyD": moveState.current.right = true; break;
+                case "KeyW": moveState.current.forward += MOVE_SPEED; break;
+                case "KeyS": moveState.current.forward -= MOVE_SPEED; break;
+                case "KeyA": moveState.current.strafe += MOVE_SPEED; break;
+                case "KeyD": moveState.current.strafe -= MOVE_SPEED; break;
             }
         }
         function onKeyUp(e: KeyboardEvent) {
             switch (e.code) {
-                case "KeyW": moveState.current.forward = false; break;
-                case "KeyS": moveState.current.backward = false; break;
-                case "KeyA": moveState.current.left = false; break;
-                case "KeyD": moveState.current.right = false; break;
+                case "KeyW": moveState.current.forward -= MOVE_SPEED; break;
+                case "KeyS": moveState.current.forward += MOVE_SPEED; break;
+                case "KeyA": moveState.current.strafe -= MOVE_SPEED; break;
+                case "KeyD": moveState.current.strafe += MOVE_SPEED; break;
             }
         }
         window.addEventListener("keydown", onKeyDown);
@@ -111,7 +105,7 @@ export function PlayerController({ facing, position, playerHeight, obstacles, gr
         initializedFacing.current = true;
       }
 
-        const { forward, backward, left, right} = moveState.current;
+        const { forward, strafe } = moveState.current;
         timeSinceLastSend.current += delta;
 
         const direction = new THREE.Vector3();
@@ -122,18 +116,15 @@ export function PlayerController({ facing, position, playerHeight, obstacles, gr
         }
         direction.normalize();
 
-        const strafe = new THREE.Vector3();
-        strafe.crossVectors(camera.up, direction).normalize() //Direction perpendicular to facing 
+        const strafeVector = new THREE.Vector3();
+        strafeVector.crossVectors(camera.up, direction).normalize() //Direction perpendicular to facing 
         
         //Vector operations to construct the move vector to add to position
         const move = new THREE.Vector3();
-        if (forward) move.add(direction);
-        if (backward) move.sub(direction);
-        if(left) move.add(strafe);
-        if (right) move.sub(strafe);
+        move.add(strafeVector.multiplyScalar(strafe * delta));
+        move.add(direction.multiplyScalar(forward * delta));
 
         if (move.lengthSq() > 0) {
-            move.normalize().multiplyScalar(MOVE_SPEED * delta);
             
             //check x-axis collision
             const nextX = camera.position.clone();

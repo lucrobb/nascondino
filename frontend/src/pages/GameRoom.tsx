@@ -8,7 +8,8 @@ import type {
     OtherPlayer,
     StatusType, 
     Obstacle,
-    Terrain 
+    Terrain,
+    Movement 
 } from '../types';
 import { WebsocketSend } from '../api/game';
 import { toast } from 'sonner';
@@ -28,6 +29,7 @@ import { NameInput } from '../components/world/NameInput';
 import { MenuDialog } from '../components/world/MenuDialog';
 import { SceneFog } from '../components/world/SceneFog';
 import { LoadingScreen } from '@/components/world/LoadingScreen';
+import { Joystick } from '../components/world/Joystick';
 
 
 export default function GameRoom() {
@@ -185,6 +187,11 @@ export default function GameRoom() {
     const WORLD_FOG = "#8f8d87";
     const WORLD_SIZE = 100;
 
+    const moveState = useRef<Movement>({
+        forward: 0,
+        strafe: 0
+    });
+
 
     return (
         <div className="h-screen w-screen relative">
@@ -219,6 +226,7 @@ export default function GameRoom() {
                                 onWsSend={wsSend}
                                 captureFeedback={captureFeedback}
                             />
+                            <Joystick moveState={moveState} />
 
                             <Canvas
                                 shadows
@@ -242,6 +250,7 @@ export default function GameRoom() {
                                     obstacles={obstacles}
                                     groundRef={terrainRef}
                                     onMove={wsSend.move}
+                                    moveState={moveState}
                                     isFound={player.isFound}
                                 />
                                 <CaptureController
