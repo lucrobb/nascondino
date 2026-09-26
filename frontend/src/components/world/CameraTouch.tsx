@@ -1,21 +1,46 @@
 import { useRef } from "react";
-import type { Camera } from "three";
-
+import * as THREE from "three";
 
 const SENSITIVITY = 0.005;
-const MAX_VERTICAL_ANGLE = Math.PI / 2 - 0.05;
+const MAX_PITCH = Math.PI / 2 - 0.05;
 
 interface CameraTouchProps {
-    camera: Camera;
+    camera: THREE.Camera;
 }
 
 export function CameraTouch({ camera }: CameraTouchProps) {
-
     const pointerId = useRef<number | null>(null);
-    const lastPosition = useRef({ x: 0, y: 0 });
 
-    function handlePointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    const lastPosition = useRef({
+        x: 0,
+        y: 0,
+    });
+
+    const yaw = useRef(0);
+    const pitch = useRef(0);
+
+    const initialized = useRef(false);
+
+    function initializeRotation() {
+        if (initialized.current) return;
+
+        const euler = new THREE.Euler().setFromQuaternion(
+            camera.quaternion,
+            "YXZ"
+        );
+
+        yaw.current = euler.y;
+        pitch.current = euler.x;
+
+        initialized.current = true;
+    }
+
+    function handlePointerDown(
+        e: React.PointerEvent<HTMLDivElement>
+    ) {
         if (pointerId.current !== null) return;
+
+        initializeRotation();
 
         pointerId.current = e.pointerId;
 
@@ -27,27 +52,42 @@ export function CameraTouch({ camera }: CameraTouchProps) {
         e.currentTarget.setPointerCapture(e.pointerId);
     }
 
-    function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    function handlePointerMove(
+        e: React.PointerEvent<HTMLDivElement>
+    ) {
         if (e.pointerId !== pointerId.current) return;
 
-        const dx = e.clientX - lastPosition.current.x;
-        const dy = e.clientY - lastPosition.current.y;
+        const dx =
+            e.clientX - lastPosition.current.x;
+
+        const dy =
+            e.clientY - lastPosition.current.y;
 
         lastPosition.current = {
             x: e.clientX,
             y: e.clientY,
         };
 
-        camera.rotation.y -= dx * SENSITIVITY;
-        camera.rotation.x -= dy * SENSITIVITY;
+        yaw.current -= dx * SENSITIVITY;
+        pitch.current -= dy * SENSITIVITY;
 
-        camera.rotation.x = Math.max(
-            -MAX_VERTICAL_ANGLE,
-            Math.min(MAX_VERTICAL_ANGLE, camera.rotation.x)
+        pitch.current = THREE.MathUtils.clamp(
+            pitch.current,
+            -MAX_PITCH,
+            MAX_PITCH
+        );
+
+        camera.rotation.set(
+            pitch.current,
+            yaw.current,
+            0,
+            "YXZ"
         );
     }
 
-    function handlePointerUp(e: React.PointerEvent<HTMLDivElement>) {
+    function handlePointerUp(
+        e: React.PointerEvent<HTMLDivElement>
+    ) {
         if (e.pointerId !== pointerId.current) return;
 
         pointerId.current = null;
