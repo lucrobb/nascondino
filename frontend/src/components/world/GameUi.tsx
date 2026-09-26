@@ -12,6 +12,8 @@ interface GameUiProps {
     onNavigate: (url: string) => void;
     onWsSend: WebsocketSend;
     captureFeedback: string | null;
+    onCapture: () => void;
+    showTouchControls: boolean
 }
 
 export function GameUi({
@@ -22,6 +24,8 @@ export function GameUi({
     onNavigate,
     onWsSend,
     captureFeedback,
+    onCapture,
+    showTouchControls
 }: GameUiProps) {
     const formattedTime =
         timeRemaining !== null
@@ -45,6 +49,24 @@ export function GameUi({
                                 : "bg-primary"
                         }`}
                     />
+                </div>
+            )}
+            
+            {/* Mobile capture button */}
+            {status === "in_progress" && player.isHunter && showTouchControls && (
+                <div className="fixed bottom-8 right-8 z-20">
+                    <Button
+                        type="button"
+                        size="icon"
+                        variant="outline"
+                        onPointerDown={(e) => {
+                            e.preventDefault();
+                            onCapture();
+                        }}
+                        className="h-16 w-16 rounded-full border-border/70 bg-background/80 shadow-lg backdrop-blur-md transition-transform active:scale-95 touch-none"
+                    >
+                        <span className="text-xl">🎯</span>
+                    </Button>
                 </div>
             )}
 

@@ -15,11 +15,10 @@ import { WebsocketSend } from '../api/game';
 import { toast } from 'sonner';
 import { Canvas } from "@react-three/fiber";
 import { PointerLockControls } from "@react-three/drei";
-import type { Camera } from "three";
-import { Mesh } from "three";
+import type { Camera, Scene, WebGLRenderer } from "three";
+import { Mesh, Raycaster, Vector2 } from "three";
 
 import { PlayerController } from '../components/world/PlayerController';
-import { CaptureController } from '../components/world/CaptureController';
 import { Lights } from '../components/world/Lights';
 import { Ground } from '../components/world/Ground';
 import { Obstacles } from '../components/world/Obstacles';
@@ -194,12 +193,34 @@ export default function GameRoom() {
         strafe: 0
     });
     const [camera, setCamera] = useState<Camera | null>(null)
+    const [scene, setScene] = useState<Scene | null>(null);
+    const [gl, setGl] = useState<WebGLRenderer | null>(null);
 
     const [showTouchControls, setShowTouchControls] = useState<boolean>(false);
     useEffect(() => {
         const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
         setShowTouchControls(hasTouch);
     }, []);
+
+    const raycaster = useRef<Raycaster>(new Raycaster());
+
+    function onCapture() {
+        if (!camera || !scene || !gl) return;
+        raycaster.current.setFromCamera(new Vector2(0, 0), camera);
+        const hits = raycaster.current.intersectObjects(scene.children, true);
+
+        if (hits.length > 0 && hits[0].object.userData.playerId) {
+            const targetId: string = hits[0].object.userData.playerId;
+            console.log("Sent capture attempt");
+            wsSend.captureTarget(targetId);
+        }
+    }
+
+    useEffect(() => {
+        if (!camera || !scene || !gl) return;
+        gl.domElement.addEventListener("click", onCapture);
+        return () => gl.domElement.removeEventListener("click", onCapture);
+    }, [camera, scene, gl])
 
 
     return (
@@ -234,6 +255,8 @@ export default function GameRoom() {
                                 onNavigate={navigate}
                                 onWsSend={wsSend}
                                 captureFeedback={captureFeedback}
+                                onCapture={onCapture}
+                                showTouchControls={showTouchControls}
                             />
                             {showTouchControls && camera && (
                                 <>
@@ -243,8 +266,10 @@ export default function GameRoom() {
                             )}
 
                             <Canvas
-                                onCreated={({ camera }) => {
+                                onCreated={({ camera, scene, gl }) => {
                                     setCamera(camera);
+                                    setScene(scene);
+                                    setGl(gl);
                                 }}
                                 shadows
                                 camera={{
@@ -269,9 +294,6 @@ export default function GameRoom() {
                                     onMove={wsSend.move}
                                     moveState={moveState}
                                     isFound={player.isFound}
-                                />
-                                <CaptureController
-                                    onCapture={wsSend.captureTarget}
                                 />
                                 <Lights />
                                 <SceneFog maxDistance={MAX_DISTANCE} fogColor={WORLD_FOG}/>

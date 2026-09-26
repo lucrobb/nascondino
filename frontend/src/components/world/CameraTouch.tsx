@@ -95,7 +95,7 @@ export function CameraTouch({ camera }: CameraTouchProps) {
 
     return (
         <div
-            className="fixed inset-y-0 right-0 z-40 w-1/2 touch-none"
+            className="fixed inset-y-0 right-0 z-10 w-1/2 touch-none"
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
