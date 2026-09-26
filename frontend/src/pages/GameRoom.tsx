@@ -235,8 +235,11 @@ export default function GameRoom() {
                                 onWsSend={wsSend}
                                 captureFeedback={captureFeedback}
                             />
-                            {showTouchControls && (
-                                <Joystick moveState={moveState} />
+                            {showTouchControls && camera && (
+                                <>
+                                    <Joystick moveState={moveState} />
+                                    <CameraTouch camera={camera}/>
+                                </>
                             )}
 
                             <Canvas
@@ -257,7 +260,6 @@ export default function GameRoom() {
                             >
                                 <color attach="background" args={[WORLD_SKY]} />
                                 {!showTouchControls && <PointerLockControls />}
-                                {showTouchControls && camera && <CameraTouch camera={camera}/>}
                                 <PlayerController
                                     facing={facing}
                                     position={position}
