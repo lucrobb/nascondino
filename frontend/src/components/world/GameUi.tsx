@@ -63,7 +63,7 @@ export function GameUi({
                             e.preventDefault();
                             onCapture();
                         }}
-                        className="h-16 w-16 rounded-full border-border/70 bg-background/80 shadow-lg backdrop-blur-md transition-transform active:scale-95 touch-none"
+                        className="h-16 w-16 rounded-full flex justify-center items-center border-border/70 bg-background/80 shadow-lg backdrop-blur-md transition-transform active:scale-95 touch-none"
                     >
                         <span className="text-xl">🎯</span>
                     </Button>
