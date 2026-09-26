@@ -65,18 +65,18 @@ export function PlayerController({ facing, position, playerHeight, obstacles, gr
         //Add key event listeners for movement
         function onKeyDown(e: KeyboardEvent) {
             switch (e.code) {
-                case "KeyW": moveState.current.forward += MOVE_SPEED; break;
-                case "KeyS": moveState.current.forward -= MOVE_SPEED; break;
-                case "KeyA": moveState.current.strafe += MOVE_SPEED; break;
-                case "KeyD": moveState.current.strafe -= MOVE_SPEED; break;
+                case "KeyW": moveState.current.forward = Math.min(moveState.current.forward + 1, 1); break;
+                case "KeyS": moveState.current.forward = Math.max(moveState.current.forward -1, -1); break;
+                case "KeyA": moveState.current.strafe = Math.min(moveState.current.strafe + 1, 1); break;
+                case "KeyD": moveState.current.strafe = Math.max(moveState.current.strafe - 1, -1); break;
             }
         }
         function onKeyUp(e: KeyboardEvent) {
             switch (e.code) {
-                case "KeyW": moveState.current.forward -= MOVE_SPEED; break;
-                case "KeyS": moveState.current.forward += MOVE_SPEED; break;
-                case "KeyA": moveState.current.strafe -= MOVE_SPEED; break;
-                case "KeyD": moveState.current.strafe += MOVE_SPEED; break;
+                case "KeyW": moveState.current.forward = Math.max(moveState.current.forward - 1, -1); break;
+                case "KeyS": moveState.current.forward = Math.min(moveState.current.forward + 1, 1); break;
+                case "KeyA": moveState.current.strafe = Math.max(moveState.current.strafe - 1, -1); break;
+                case "KeyD": moveState.current.strafe = Math.min(moveState.current.strafe + 1, 1); break;
             }
         }
         window.addEventListener("keydown", onKeyDown);
@@ -121,8 +121,8 @@ export function PlayerController({ facing, position, playerHeight, obstacles, gr
         
         //Vector operations to construct the move vector to add to position
         const move = new THREE.Vector3();
-        move.add(strafeVector.multiplyScalar(strafe * delta));
-        move.add(direction.multiplyScalar(forward * delta));
+        move.add(strafeVector.multiplyScalar(strafe * MOVE_SPEED * delta));
+        move.add(direction.multiplyScalar(forward * MOVE_SPEED * delta));
 
         if (move.lengthSq() > 0) {
             

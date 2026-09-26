@@ -9,12 +9,13 @@ import type {
     StatusType, 
     Obstacle,
     Terrain,
-    Movement 
+    Movement,
 } from '../types';
 import { WebsocketSend } from '../api/game';
 import { toast } from 'sonner';
 import { Canvas } from "@react-three/fiber";
 import { PointerLockControls } from "@react-three/drei";
+import type { Camera } from "three";
 import { Mesh } from "three";
 
 import { PlayerController } from '../components/world/PlayerController';
@@ -30,6 +31,7 @@ import { MenuDialog } from '../components/world/MenuDialog';
 import { SceneFog } from '../components/world/SceneFog';
 import { LoadingScreen } from '@/components/world/LoadingScreen';
 import { Joystick } from '../components/world/Joystick';
+import { CameraTouch } from '../components/world/CameraTouch'; 
 
 
 export default function GameRoom() {
@@ -191,6 +193,13 @@ export default function GameRoom() {
         forward: 0,
         strafe: 0
     });
+    const [camera, setCamera] = useState<Camera | null>(null)
+
+    const [showTouchControls, setShowTouchControls] = useState<boolean>(false);
+    useEffect(() => {
+        const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+        setShowTouchControls(hasTouch);
+    }, []);
 
 
     return (
@@ -226,9 +235,14 @@ export default function GameRoom() {
                                 onWsSend={wsSend}
                                 captureFeedback={captureFeedback}
                             />
-                            <Joystick moveState={moveState} />
+                            {showTouchControls && (
+                                <Joystick moveState={moveState} />
+                            )}
 
                             <Canvas
+                                onCreated={({ camera }) => {
+                                    setCamera(camera);
+                                }}
                                 shadows
                                 camera={{
                                     position: [
@@ -242,7 +256,8 @@ export default function GameRoom() {
                                 }}
                             >
                                 <color attach="background" args={[WORLD_SKY]} />
-                                <PointerLockControls />
+                                {!showTouchControls && <PointerLockControls />}
+                                {showTouchControls && camera && <CameraTouch camera={camera}/>}
                                 <PlayerController
                                     facing={facing}
                                     position={position}

@@ -32,7 +32,7 @@ export function Joystick({ moveState }: JoystickProps) {
         }
 
         // Moving the joystick upward should mean moving forward.
-        moveState.current.strafe = x;
+        moveState.current.strafe = -x;
         moveState.current.forward = -y;
     }
 
@@ -43,7 +43,8 @@ export function Joystick({ moveState }: JoystickProps) {
         moveState.current.strafe = 0;
 
         if (joystickRef.current) {
-            joystickRef.current.style.transform = "translate(-50%, -50%)";
+            joystickRef.current.style.left = "50%";
+            joystickRef.current.style.top = "50%";
         }
     }
 
@@ -80,8 +81,8 @@ export function Joystick({ moveState }: JoystickProps) {
         }
 
         if (joystickRef.current) {
-            joystickRef.current.style.transform =
-                `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
+            joystickRef.current.style.left = `calc(50% + ${x}px)`;
+            joystickRef.current.style.top = `calc(50% + ${y}px)`;
         }
     }
 
@@ -101,7 +102,7 @@ export function Joystick({ moveState }: JoystickProps) {
         >
             <div
                 ref={joystickRef}
-                className="absolute left-1/2 top-1/2 h-12 w-12 rounded-full bg-white/70 shadow-lg"
+                className="absolute left-1/2 top-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/70 shadow-lg"
             />
         </div>
     );

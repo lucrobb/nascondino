@@ -12,6 +12,10 @@ export interface Movement {
     forward: number;
     strafe: number;
 }
+export interface CameraRotation {
+    horizontal: number;
+    vertical: number;
+}
 
 export type MaterialType =
     | "concrete"
