@@ -11,7 +11,7 @@ import type {
     Terrain,
     Movement,
 } from '../types';
-import { WebsocketSend } from '../api/game';
+import { WebsocketSend } from '../wsHelper';
 import { toast } from 'sonner';
 import { Canvas } from "@react-three/fiber";
 import { PointerLockControls } from "@react-three/drei";

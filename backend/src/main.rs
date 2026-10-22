@@ -28,7 +28,7 @@ async fn main() {
     let (registry_tx, registry_rx) = mpsc::channel(100);
     tokio::spawn(run_registry(registry_rx, registry_tx.clone()));
 
-    let listener = match TcpListener::bind("127.0.0.1:9001").await {
+    let listener = match TcpListener::bind("127.0.0.1:8000/lobby").await {
         Ok(listener) => listener,
         Err(e) => {
             eprintln!("Couldn't bind the port: {e}");

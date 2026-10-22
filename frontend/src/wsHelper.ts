@@ -1,4 +1,4 @@
-import type { ClientMessage, Vector3, FacingAngles } from "../types";
+import type { ClientMessage, Vector3, FacingAngles } from "./types";
 
 export class WebsocketSend {
     private socketRef: React.RefObject<WebSocket | null>;
