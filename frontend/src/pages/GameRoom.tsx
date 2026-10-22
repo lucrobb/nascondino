@@ -36,7 +36,7 @@ import { CameraTouch } from '../components/world/CameraTouch';
 export default function GameRoom() {
     const { roomCode } = useParams();
     const navigate = useNavigate();
-    const WS_URL = import.meta.env.VITE_WS_URL;
+    const WS_URL = import.meta.env.WS_URL;
 
     const playerId = useRef<string>(localStorage.getItem("playerId") ?? crypto.randomUUID());
     useEffect(() => {
