@@ -105,7 +105,7 @@ class Vision:
         fragments = [(overlap_h_start, overlap_h_end, overlap_v_start, overlap_v_end, True)]
 
         #Append leftover segments not overlapped by the new obstacle
-        #The vertical segments only use the overlapping width as to not overlap with other leftover fragments
+        #The top and bottom segments only use the overlapping width as to not overlap with other leftover fragments
 
         #Left
         if h_start < overlap_h_start:
