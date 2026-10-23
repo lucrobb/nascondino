@@ -247,3 +247,45 @@ pub struct Region {
     pub v_end: f64,
     pub is_obstacle: bool
 }
+
+//-----------------------------------------------------------------------------------------------------
+//Http communication
+//-----------------------------------------------------------------------------------------------------
+
+pub type HttpResponse = Response<Full<Bytes>>;
+
+#[derive(Serialize)]
+struct ErrorResponse {
+    error: String,
+}
+
+pub fn error_response(
+    status: StatusCode,
+    message: &str,
+) -> HttpResponse {
+    let body = serde_json::to_string(&ErrorResponse {
+        error: message.to_string(),
+    })
+    .unwrap();
+
+    return Response::builder()
+        .status(status)
+        .header("Content-Type", "application/json")
+        .body(Full::new(Bytes::from(body)))
+        .unwrap();
+}
+
+pub enum ServerResponse {
+    GetLobby { room_code: String },
+}
+
+pub fn http_response(
+    message: ServerResponse,
+) -> HttpResponse {
+    let body = serde_json::to_string(&message).unwrap();
+    return Response::builder()
+        .status(StatusCode::OK)
+        .header("Content-Type", "application/json")
+        .body(Full::new(Bytes::from(body)))
+        .unwrap();
+}

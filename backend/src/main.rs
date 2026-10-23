@@ -68,7 +68,7 @@ async fn main() {
                 (ws, room_handle, player_id)
             },
             Err(e) => {
-                eprintln!("Error obtaining url params: {e}");
+                eprintln!("Error connecting: {e}");
                 continue;
             },
         };
