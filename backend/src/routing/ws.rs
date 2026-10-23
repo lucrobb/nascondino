@@ -19,7 +19,7 @@ pub async fn handle_websocket_connection(request: Request<Incoming>, path: &str,
         Ok(Some(handle)) => handle,
         Ok(None) => {
             eprintln!("Lobby not found");
-            return error_response(StatusCode::BAD_REQUEST, "Lobby non trovata");
+            return error_response(StatusCode::NOT_FOUND, "Lobby non trovata");
         }
         Err(_) => {
             eprintln!("Error receiving room handle from registry");

@@ -9,14 +9,18 @@ mod vision;
 use tokio::net::{TcpListener, TcpStream}; //TCP listener
 use tokio::sync::{mpsc, oneshot}; //Async tasks handling
 
+use std::convert::Infallible;
 
-//Implementing the websocket connection
-use tokio_tungstenite::{WebSocketStream, accept_hdr_async};
-use tokio_tungstenite::tungstenite::handshake::server::{Request, Response, ErrorResponse};
-use tokio_tungstenite::tungstenite::http::StatusCode;
+use http_body_util::Full;
+use hyper::body::Bytes;
+use hyper::service::service_fn;
+use hyper::server::conn::http1;
+use hyper_util::rt::TokioIo;
 
-use std::error::Error;
 
+
+use crate::routing::http::handle_http_request;
+use crate::routing::ws::handle_ws_handshake;
 use crate::room_registry::run_registry;
 use crate::consumer::handle_connection;
 use crate::types::{RoomHandle, RegistryCommand};
@@ -37,72 +41,31 @@ async fn main() {
     };
 
     loop {
-        let (stream, _) = match listener.accept().await {
-            Ok(pair) => pair,
+        let (stream, address) = match listener.accept().await {
+            Ok((s, a)) => (s, a),
             Err(e) => {
-                eprintln!("Accept failed: {e}");
-                continue; //skip this connection, listen on the next ones
-            },
-        };
-
-        let (ws, room_handle, player_id) = match ws_handshake(stream).await {
-            Ok((ws, room_code, player_id)) => {
-
-                let (reply_tx, reply_rx) = oneshot::channel::<RoomHandle>();
-                if let Err(e) = registry_tx.send(RegistryCommand::GetOrCreate {
-                    room_code: room_code.clone(),
-                    reply_tx,
-                }).await {
-                    eprintln!("Error getting or creating room: {e}");
-                    continue;
-                }
-
-                let room_handle = match reply_rx.await {
-                    Ok(handle) => handle,
-                    Err(_) => {
-                        eprintln!("Error in room handle communication");
-                        continue;
-                    }
-                };
-
-                (ws, room_handle, player_id)
-            },
-            Err(e) => {
-                eprintln!("Error connecting: {e}");
+                eprintln!("Error accepting connection: {e}");
                 continue;
-            },
+            }
         };
 
-        tokio::spawn(async move { 
-            handle_connection(ws, room_handle, player_id).await;
+        println!("New connection from {address}");
+
+        tokio::spawn(async move {
+            let io = TokioIo::new(stream);
+
+            let service = service_fn(handle_request);
+
+            let connection = http1::Builder::new()
+                .serve_connection(io, service)
+                .with_upgrades();
+
+            if let Err(error) = connection.await {
+                eprintln!("Connection error: {error}");
+            }
         });
     }
 }
 
-async fn ws_handshake(stream: TcpStream) -> Result<(WebSocketStream<TcpStream>, String, String), Box<dyn Error>> {
-    let mut room_code = String::new();
-    let mut player_id = String::new();
 
-    let ws = accept_hdr_async(stream, |req: &Request, res: Response| -> Result<Response, ErrorResponse> {
-        let path = req.uri().path();
-        let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
-
-        if segments.len() == 3 && segments[0] == "lobby"{
-            room_code = segments[1].to_string();
-            player_id = segments[2].to_string();
-
-            println!("Connection made: Room {room_code}, Player {player_id}");
-            return Ok(res);
-        } else {
-            let mut err = ErrorResponse::new(Some("Invalid url path".to_string()));
-            *err.status_mut() = StatusCode::BAD_REQUEST;
-            return Err(err);
-        }
-    }).await;
-
-    match ws {
-        Ok(ws) => Ok((ws, room_code, player_id)),
-        Err(e) => Err(Box::new(e)),
-    }
-}
 
