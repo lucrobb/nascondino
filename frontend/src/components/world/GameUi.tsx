@@ -1,7 +1,7 @@
 import type { StatusType, Player } from "../../types";
 import { Button } from "../ui/button";
 import { Kbd } from "../ui/kbd";
-import { WebsocketSend } from "../../api/game";
+import { WebsocketSend } from "../../wsHelper";
 import { cn } from "cn";
 
 interface GameUiProps {

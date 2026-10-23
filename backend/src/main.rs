@@ -28,7 +28,7 @@ async fn main() {
     let (registry_tx, registry_rx) = mpsc::channel(100);
     tokio::spawn(run_registry(registry_rx, registry_tx.clone()));
 
-    let listener = match TcpListener::bind("127.0.0.1:8000/lobby").await {
+    let listener = match TcpListener::bind("127.0.0.1:8000").await {
         Ok(listener) => listener,
         Err(e) => {
             eprintln!("Couldn't bind the port: {e}");
@@ -37,7 +37,7 @@ async fn main() {
     };
 
     loop {
-        let (stream, _addr) = match listener.accept().await {
+        let (stream, _) = match listener.accept().await {
             Ok(pair) => pair,
             Err(e) => {
                 eprintln!("Accept failed: {e}");
@@ -84,30 +84,20 @@ async fn ws_handshake(stream: TcpStream) -> Result<(WebSocketStream<TcpStream>, 
     let mut player_id = String::new();
 
     let ws = accept_hdr_async(stream, |req: &Request, res: Response| -> Result<Response, ErrorResponse> {
-        let query = match req.uri().query(){
-            Some(q) => q,
-            None => {
-                let mut err = ErrorResponse::new(Some("Missing query params".to_string()));
-                *err.status_mut() = StatusCode::BAD_REQUEST;
-                return Err(err);
-            },
-        };
+        let path = req.uri().path();
+        let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
 
-        for pair in query.split('&') {
-            match pair.split_once('=') {
-                Some(("room_code", value)) => room_code = value.to_string(),
-                Some(("player_id", value)) => player_id = value.to_string(),
-                _ => {},
-            }
-        }
+        if segments.len() == 3 && segments[0] == "lobby"{
+            room_code = segments[1].to_string();
+            player_id = segments[2].to_string();
 
-        if room_code.is_empty() || player_id.is_empty() {
-            let mut err = ErrorResponse::new(Some("Missing room code and/or player id".to_string()));
+            println!("Connection made: Room {room_code}, Player {player_id}");
+            return Ok(res);
+        } else {
+            let mut err = ErrorResponse::new(Some("Invalid url path".to_string()));
             *err.status_mut() = StatusCode::BAD_REQUEST;
             return Err(err);
         }
-
-        Ok(res)
     }).await;
 
     match ws {
