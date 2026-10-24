@@ -1,41 +1,49 @@
-
+use crate::types::{RegistryCommand, RegistryHandle, ServerMessage, HttpResponse};
+use tokio::sync::onsehot;
+use hyper::StatusCode;
 
 pub async fn get_lobby(room_code: &str, registry_handle: RegistryHandle) -> HttpResponse {
-    let (reply_tx, reply_rx) = oneshot::channel::<Option<RoomHandle>>();
+    let (reply_tx, reply_rx) = oneshot::channel::<bool>();
     if let Err(_) = registry_handle.send(
-        RegistryCommand::GetLobby { room_code: room_code.to_string(), reply_tx }
+        RegistryCommand::CheckLobbyExists { room_code: room_code.to_string(), reply_tx }
     ).await {
         eprintln!("Failed to send room search command");
         return error_response(StatusCode::INTERNAL_SERVER_ERROR, "Error nella ricerca della lobby")
     }
 
     match reply_rx.await {
-        Ok(Some(code)) => {
-            return http_response(ServerResponse::GetLobby { room_code: code });
-        },
-        Ok(None) => {
-            eprintln!("Room not found");
-            return error_response(StatusCode::BAD_REQUEST, "Lobby non trovata");
+        Ok(Some(result)) => {
+            if result {
+                return http_response(ServerMessage::LobbyResult { room_code: room_code.to_string() });
+            } else {
+                return error_response(
+                    StatusCode::NOT_FOUND,
+                    "Lobby non trovata",
+                );
+            }
         },
         Err(e) => {
             eprintln!("Error receiving room code");
-            return error_response(StatusCode::INTERNAL_SERVER_ERROR, "Errore nella ricerca della lobby");
+            return error_response(
+                StatusCode::INTERNAL_SERVER_ERROR, 
+                "Errore nella ricerca della lobby",
+            );
         }
     }
 }
 
 pub async fn create_lobby(registry_handle: RegistryHandle) -> HttpResponse {
-    let (reply_tx, reply_rx) = oneshot::channel::<RoomHandle>();
+    let (reply_tx, reply_rx) = oneshot::channel::<String>();
     if let Err(_) = registry_handle.send(
-        RegistryCommand::CreateLobby {}
+        RegistryCommand::CreateLobby { reply_tx }
     ).await {
         eprintln!("Failed to send create room command");
         return error_response(StatusCode::INTERNAL_SERVER_ERROR, "Richiesta di creazione fallita");
     }
 
     match reply_rx.await {
-        Ok(code) => {
-            return http_response(ServerResponse::CreateLobby { room_code: code });
+        Ok(room_code) => {
+            return http_response(ServerMessage::LobbyResult { room_code });
         },
         Err(_) => {
             eprintln!("Error creating room");

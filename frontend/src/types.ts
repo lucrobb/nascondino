@@ -82,6 +82,7 @@ export interface LobbyInitialization {
 }
 
 export type ServerMessage = 
+    | { type: "lobby_result"; roomCode: string }
     | { type: "initial_state"; lobby: LobbyInitialization; player: Player; position: Vector3; facing: FacingAngles; otherPlayers: OtherPlayer[] }
     | { type: "state_update"; status: StatusType; player: PlayerUpdate; otherPlayers: OtherPlayer[] }
     | { type: "game_over"; winner: "hunters" | "hiders" }
@@ -92,6 +93,7 @@ export type ServerMessage =
 
 
 export type ClientMessage = 
+    | { type: "find_lobby", roomCode: string }
     | { type: "move"; position: Vector3; facing: FacingAngles }
     | { type: "join"; name: string}
     | { type: "start_game" }

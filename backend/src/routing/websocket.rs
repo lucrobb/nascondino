@@ -1,4 +1,7 @@
+use hyper::{Request, StatusCode}
+use hyper_tungstenite;
 
+use crate::types::{RegistryCommand, RoomHandle};
 
 pub async fn handle_websocket_connection(request: Request<Incoming>, path: &str, registry_handle: RegistryHandle) -> HttpResponse {
     let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();

@@ -168,7 +168,9 @@ impl Player {
 //-----------------------------------------------------------------------------------------------------
 
 pub enum RegistryCommand {
-    GetOrCreate { room_code: String, reply_tx: oneshot::Sender<RoomHandle>},
+    CheckLobbyExists { room_code: String, reply_tx: oneshot::Sender<bool> },
+    CreateLobby { reply_tx: oneshot::Sender<String> },
+    GetHandle { room_code: String, reply_tx: oneshot::Sender<Option<RoomHandle>> },
     EndGame { room_code: String },
 }
 pub type RegistryHandle = mpsc::Sender<RegistryCommand>;
@@ -202,9 +204,12 @@ pub enum RoomCommand {
 //Client communication protocol
 //-----------------------------------------------------------------------------------------------------
 
+pub type HttpResponse = Response<Full<Bytes>>;
+
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum ClientMessage {
+    FindLobby { room_code: String },
     Join { name: String },
     Move { position: Vector3, facing: FacingAngles },
     KickPlayer { kick_id: String },
@@ -216,6 +221,7 @@ pub enum ClientMessage {
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "camelCase")]
 pub enum ServerMessage {
+    LobbyResult { room_code: String },
     InitialState {
         status: GameStatus,
         obstacles: Vec<Obstacle>,
@@ -248,44 +254,3 @@ pub struct Region {
     pub is_obstacle: bool
 }
 
-//-----------------------------------------------------------------------------------------------------
-//Http communication
-//-----------------------------------------------------------------------------------------------------
-
-pub type HttpResponse = Response<Full<Bytes>>;
-
-#[derive(Serialize)]
-struct ErrorResponse {
-    error: String,
-}
-
-pub fn error_response(
-    status: StatusCode,
-    message: &str,
-) -> HttpResponse {
-    let body = serde_json::to_string(&ErrorResponse {
-        error: message.to_string(),
-    })
-    .unwrap();
-
-    return Response::builder()
-        .status(status)
-        .header("Content-Type", "application/json")
-        .body(Full::new(Bytes::from(body)))
-        .unwrap();
-}
-
-pub enum ServerResponse {
-    GetLobby { room_code: String },
-}
-
-pub fn http_response(
-    message: ServerResponse,
-) -> HttpResponse {
-    let body = serde_json::to_string(&message).unwrap();
-    return Response::builder()
-        .status(StatusCode::OK)
-        .header("Content-Type", "application/json")
-        .body(Full::new(Bytes::from(body)))
-        .unwrap();
-}
