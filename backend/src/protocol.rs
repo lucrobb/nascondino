@@ -1,27 +1,25 @@
 //For now we will maintain JSON for simplicity, observability and because it is already in use on the frontend
-use serde::Serialize;
-use serde::de::DeserializeOwned;
 use http_body_util::Full;
 use hyper::body::Bytes;
 use hyper::{Response, StatusCode};
 
-use crate::types::ErrorResponse;
+use crate::types::{ClientMessage, ServerMessage};
 
-pub fn decode<T: DeserializeOwned>(data: &[u8]) -> Result<T, String> {
-    match serde_json::from_slice::<T>(data) {
+pub fn decode(data: &[u8]) -> Result<ClientMessage, String> {
+    match serde_json::from_slice::<ClientMessage>(data) {
         Ok(message) => Ok(message),
         Err(e) => Err(e.to_string()),
     }
 }
 
-pub fn encode<T: Serialize>(data: &T) -> Result<String, String> {
-    match serde_json::to_string::<T>(data) {
+pub fn encode(data: &ServerMessage) -> Result<String, String> {
+    match serde_json::to_string::<ServerMessage>(data) {
         Ok(message) => Ok(message),
         Err(e) => Err(e.to_string()),
     }
 }
 
-pub fn http_response<T: Serialize>(data: &T) -> HttpResponse {
+pub fn http_response(data: &ServerMessage) -> HttpResponse {
     let body = match encode(data) {
         Ok(body) => body,
         Err(e) => {
@@ -44,7 +42,7 @@ pub fn error_response(
     status: StatusCode,
     message: &str,
 ) -> HttpResponse {
-    let body = match encode::<ErrorResponse>(
+    let body = match encode::<ServerMessage>(
         &ServerMessage::Error { message: message.to_string() }
     ) {
         Ok(body) => body,
