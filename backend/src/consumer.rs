@@ -1,18 +1,18 @@
-use tokio::net::TcpStream;
+use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::sync::mpsc;
-use tokio_tungstenite::tungstenite::Message;
-use tokio_tungstenite::WebSocketStream;
+use hyper_tungstenite::tungstenite::Message;
+use hyper_tungstenite::WebSocketStream;
 use futures_util::stream::StreamExt;
 use futures_util::SinkExt;
 
 use crate::protocol::{decode, encode};
 use crate::types::{RoomHandle, ClientMessage, RoomCommand, ConsumerCommand};
 
-pub async fn handle_connection(
-    ws: WebSocketStream<TcpStream>, 
+pub async fn handle_consumer<S>(
+    ws: WebSocketStream<S>, 
     room_handle: RoomHandle, 
     player_id: String
-) {
+) where S: AsyncRead + AsyncWrite + Unpin {
     let (my_tx, mut my_rx) = mpsc::channel(100);
     let (mut write, mut read) = ws.split();
 
@@ -47,7 +47,7 @@ pub async fn handle_connection(
                         continue;
                     }
                 };
-                let message: ClientMessage = match decode(&text) {
+                let message: ClientMessage = match decode(&text.as_bytes()) {
                     Ok(message) => message,
                     Err(e) => {
                         eprintln!("Error parsing client message: {e}");
@@ -116,8 +116,8 @@ pub async fn handle_connection(
                     Some(ConsumerCommand::Write { message }) => (message, false),
                     Some(ConsumerCommand::Kick { message }) => (message, true),
                     None => {
-                        eprintln!("Did not receive consumer command");
-                        continue;
+                        eprintln!("Room channel closed for {player_id}");
+                        break;
                     },
                 };
 

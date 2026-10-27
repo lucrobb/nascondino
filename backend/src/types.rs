@@ -2,6 +2,10 @@ use std::time::Instant;
 use tokio::sync::{mpsc, oneshot};
 use serde::{Deserialize, Serialize};
 
+use hyper::Response;
+use http_body_util::Full;
+use hyper::body::Bytes;
+
 //-----------------------------------------------------------------------------------------------------
 //Game types
 //-----------------------------------------------------------------------------------------------------
@@ -88,26 +92,26 @@ pub struct Player {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct OtherPlayerView {
-    id: String,
-    name: String,
-    position: Vector3,
-    facing: FacingAngles,
-    is_hunter: bool,
-    is_found: bool,
+    pub id: String,
+    pub name: String,
+    pub position: Vector3,
+    pub facing: FacingAngles,
+    pub is_hunter: bool,
+    pub is_found: bool,
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PlayerStateView {
-    is_hunter: bool,
-    is_found: bool,
+    pub is_hunter: bool,
+    pub is_found: bool,
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PlayerInitialState {
-    name: String,
-    position: Vector3,
-    facing: FacingAngles,
-    is_hunter: bool,
-    is_found: bool,
-    is_creator: bool,
+    pub name: String,
+    pub position: Vector3,
+    pub facing: FacingAngles,
+    pub is_hunter: bool,
+    pub is_found: bool,
+    pub is_creator: bool,
 }
 
 impl Player {
@@ -207,9 +211,8 @@ pub enum RoomCommand {
 pub type HttpResponse = Response<Full<Bytes>>;
 
 #[derive(Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[serde(tag = "type", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum ClientMessage {
-    FindLobby { room_code: String },
     Join { name: String },
     Move { position: Vector3, facing: FacingAngles },
     KickPlayer { kick_id: String },
@@ -219,14 +222,17 @@ pub enum ClientMessage {
 }
 
 #[derive(Clone, Serialize, Deserialize)]
-#[serde(tag = "type", rename_all = "camelCase")]
+#[serde(tag = "type", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum ServerMessage {
     LobbyResult { room_code: String },
     InitialState {
         status: GameStatus,
         obstacles: Vec<Obstacle>,
         terrain: Vec<Terrain>,
+
         player: PlayerInitialState,
+        position: Vector3,
+        facing: FacingAngles,
 
         other_players: Vec<OtherPlayerView>,
     },

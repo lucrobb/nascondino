@@ -1,49 +1,58 @@
 use std::convert::Infallible;
 
-use http_body_util::BodyExt;
+use http_body_util::Full;
 use hyper::body::{Bytes, Incoming};
-use hyper::{Method, Request, Response, StatusCode};
+use hyper::{Response, Method, Request, StatusCode};
 
-use crate::types::RegistryHandle;
+use crate::types::{RegistryHandle, HttpResponse};
+use crate::routing::websocket::handle_websocket_upgrade;
+use crate::routing::http::{get_lobby, create_lobby};
+use crate::protocol::{error_response, add_cors_headers};
+
 
 pub async fn handle_request(
     request: Request<Incoming>, 
     registry_handle: RegistryHandle
 ) -> Result<HttpResponse, Infallible> {
     let method = request.method().clone();
+    if method == Method::OPTIONS {
+        let mut response = Response::builder()
+            .status(StatusCode::NO_CONTENT)
+            .body(Full::new(Bytes::new()))
+            .unwrap();
+
+        add_cors_headers(&mut response);
+
+        return Ok(response);
+    }
+
     let path = request.uri().path().to_string();
+    let segments: Vec<&str> = path.as_str().split('/').filter(|s| !s.is_empty()).collect();
+    if segments.is_empty() {
+        return Ok(error_response(
+            StatusCode::BAD_REQUEST,
+            "URL incompleto"
+        ));
+    }
 
     //If there is a request to upgrade to websocket
     if hyper_tungstenite::is_upgrade_request(&request) {
-        return Ok(handle_websocket_connection(request, &path, registry_handle).await);
+        return Ok(handle_websocket_upgrade(request, &segments, registry_handle).await);
     }
 
-    match (method, path.as_str()) {
-        (Method::GET, "/lobby") => {
-            let collected = match request.into_body().collect().await {
-                Ok(collected) => collected,
-                Err(_) => {
-                    return Ok(error_response(
-                        StatusCode::BAD_REQUEST, 
-                        "Impossibile leggere la richiesta",
-                    ));
-                }
-            };
-            let bytes = collected.to_bytes();
-            let request_body: ClientMessage::FindLobby = match decode(&bytes) {
-                Ok(body) => body,
-                Err(e) => {
-                    eprintln!("Error parsing request body: {e}");
-                    return Ok(error_response(
-                        StatusCode::BAD_REQUEST,
-                        "Impossibile leggere la richiesta",
-                    ));
-                }
-            };
-
-            return Ok(get_lobby(&request_body.room_code, registry_handle).await);
+    //Handle HTTP requests and hand them off to the dedicated endpoints
+    match (method, segments[0]) {
+        (Method::GET, "lobby") => {
+            if segments.len() != 2 {
+                return Ok(error_response(
+                    StatusCode::BAD_REQUEST,
+                    "URL invalido"
+                ));
+            }
+            let room_code = segments[1];
+            return Ok(get_lobby(room_code, registry_handle).await);
         },
-        (Method::POST, "/lobby", None) => {
+        (Method::POST, "lobby") => {
             return Ok(create_lobby(registry_handle).await);
         },
         _ => {

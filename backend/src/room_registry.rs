@@ -2,9 +2,9 @@ use std::collections::HashMap;
 use tokio::sync::mpsc;
 
 use crate::room::Room;
-use crate::types::{RegistryHandle, RegistryInbox, RegistryCommand, RoomHandle, RoomComand};
+use crate::types::{RegistryHandle, RegistryInbox, RegistryCommand, RoomHandle, RoomCommand};
 
-use rand::{Rng, rng};
+use rand::{rng, RngExt};
 
 fn generate_room_code() -> String {
     const CHARSET: &[u8] = b"ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -44,12 +44,12 @@ pub async fn run_registry(mut inbox: RegistryInbox, registry_tx: RegistryHandle)
             RegistryCommand::CreateLobby { reply_tx } => {
                 let (room_tx, room_rx) = mpsc::channel::<RoomCommand>(100);
                 let room_code = generate_unique_room_code(&rooms);
-                let room = Room::new(room_rx, registry_tx, room_code);
+                let room = Room::new(room_rx, registry_tx.clone(), room_code.clone());
 
-                rooms.insert(room_code.clone(), room);
+                rooms.insert(room_code.clone(), room_tx);
                 tokio::spawn(async move {
                     room.run().await;
-                })
+                });
 
                 if let Err(e) = reply_tx.send(room_code) {
                     eprintln!("Failed to send room code of created lobby: {e}");
@@ -58,8 +58,8 @@ pub async fn run_registry(mut inbox: RegistryInbox, registry_tx: RegistryHandle)
             RegistryCommand::GetHandle { room_code, reply_tx } => {
                 let room_handle: Option<RoomHandle> = rooms.get(&room_code).cloned();
 
-                if let Err(e) = reply_tx.send(room_handle) {
-                    eprintln!("Error sending room handle: {e}");
+                if let Err(_) = reply_tx.send(room_handle) {
+                    eprintln!("Error sending room handle");
                 }
             }
             RegistryCommand::EndGame { room_code } => {

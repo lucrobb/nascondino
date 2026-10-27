@@ -7,22 +7,15 @@ mod types;
 mod vision;
 mod routing;
 
-use tokio::net::{TcpListener, TcpStream}; //TCP listener
-use tokio::sync::{mpsc, oneshot}; //Async tasks handling
+use tokio::net::TcpListener;
+use tokio::sync::mpsc; //Async tasks handling
 
-use std::convert::Infallible;
-
-use http_body_util::Full;
-use hyper::body::Bytes;
 use hyper::service::service_fn;
 use hyper::server::conn::http1;
 use hyper_util::rt::TokioIo;
 
-use crate::routing::http::handle_http_request;
-use crate::routing::ws::handle_ws_handshake;
+use crate::routing::connection::handle_request;
 use crate::room_registry::run_registry;
-use crate::consumer::handle_connection;
-use crate::types::{RoomHandle, RegistryCommand};
 
 
 #[tokio::main]
@@ -50,10 +43,13 @@ async fn main() {
 
         println!("New connection from {address}");
 
-        tokio::spawn(async move {
+        let registry_handle = registry_tx.clone();
+        tokio::spawn(async move{
             let io = TokioIo::new(stream);
 
-            let service = service_fn(handle_request);
+            let service = service_fn(move |request| {
+                handle_request(request, registry_handle.clone())
+            });
 
             let connection = http1::Builder::new()
                 .serve_connection(io, service)

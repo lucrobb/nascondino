@@ -2,8 +2,14 @@
 use http_body_util::Full;
 use hyper::body::Bytes;
 use hyper::{Response, StatusCode};
+use hyper::header::{
+    HeaderValue,
+    ACCESS_CONTROL_ALLOW_HEADERS,
+    ACCESS_CONTROL_ALLOW_METHODS,
+    ACCESS_CONTROL_ALLOW_ORIGIN
+};
 
-use crate::types::{ClientMessage, ServerMessage};
+use crate::types::{ClientMessage, ServerMessage, HttpResponse};
 
 pub fn decode(data: &[u8]) -> Result<ClientMessage, String> {
     match serde_json::from_slice::<ClientMessage>(data) {
@@ -19,8 +25,27 @@ pub fn encode(data: &ServerMessage) -> Result<String, String> {
     }
 }
 
-pub fn http_response(data: &ServerMessage) -> HttpResponse {
-    let body = match encode(data) {
+pub fn add_cors_headers(response: &mut HttpResponse) {
+    let headers = response.headers_mut();
+
+    headers.insert(
+        ACCESS_CONTROL_ALLOW_ORIGIN,
+        HeaderValue::from_static("http://localhost:5173"),
+    );
+
+    headers.insert(
+        ACCESS_CONTROL_ALLOW_METHODS,
+        HeaderValue::from_static("GET, POST, OPTIONS"),
+    );
+
+    headers.insert(
+        ACCESS_CONTROL_ALLOW_HEADERS,
+        HeaderValue::from_static("Content-Type"),
+    );
+}
+
+pub fn http_response(data: ServerMessage) -> HttpResponse {
+    let body = match encode(&data) {
         Ok(body) => body,
         Err(e) => {
             eprintln!("Error serializing body: {e}");
@@ -31,18 +56,21 @@ pub fn http_response(data: &ServerMessage) -> HttpResponse {
         }
     };
 
-    return Response::builder()
+    let mut http_body = Response::builder()
         .status(StatusCode::OK)
         .header("Content-Type", "application/json")
         .body(Full::new(Bytes::from(body)))
         .unwrap();
+    add_cors_headers(&mut http_body);
+    
+    return http_body;
 }
 
 pub fn error_response(
     status: StatusCode,
     message: &str,
 ) -> HttpResponse {
-    let body = match encode::<ServerMessage>(
+    let body = match encode(
         &ServerMessage::Error { message: message.to_string() }
     ) {
         Ok(body) => body,
@@ -58,9 +86,12 @@ pub fn error_response(
         }
     };
 
-    return Response::builder()
+    let mut http_body = Response::builder()
         .status(status)
         .header("Content-Type", "application/json")
         .body(Full::new(Bytes::from(body)))
         .unwrap();
+    add_cors_headers(&mut http_body);
+
+    return http_body;
 }

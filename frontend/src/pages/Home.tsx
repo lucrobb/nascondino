@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { LoadingScreen } from "../components/world/LoadingScreen";
 import { getLobby, createLobby } from "../apiHelper";
+import type { ServerMessage } from "../types";
 
 export default function Home() {
     const [roomCode, setRoomCode] = useState<string>("");
@@ -15,8 +16,8 @@ export default function Home() {
         const code = roomCode.trim().toUpperCase();
         setLoadingMessage("Ricerca della lobby in corso");
         try {
-            const lobbyFound = await getLobby(code);
-            if (lobbyFound.found) {
+            const lobbyCheck: ServerMessage = await getLobby(code);
+            if (lobbyCheck.type === "lobbyResult" && lobbyCheck.roomCode === code) {
                 navigate(`/lobby/${code}`);
             } else {
                 toast.error("Lobby non trovata");
@@ -32,8 +33,10 @@ export default function Home() {
     async function handleCreate() {
         setLoadingMessage("Creazione della lobby in corso");
         try {
-            const response = await createLobby();
-            navigate(`/lobby/${response.roomCode}`);
+            const response: ServerMessage = await createLobby();
+            if (response.type === "lobbyResult") {
+                navigate(`/lobby/${response.roomCode}`);
+            }
         } catch(error) {
             console.error(`Failed to create lobby: ${error}`);
             toast.error("Errore nella creazione della lobby");

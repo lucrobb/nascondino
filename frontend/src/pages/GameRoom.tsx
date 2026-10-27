@@ -96,11 +96,11 @@ export default function GameRoom() {
         socket.onmessage = (event) => {
             const data: ServerMessage = JSON.parse(event.data);
 
-            if (data.type === "initial_state") {
+            if (data.type === "initialState") {
 
-                setObstacles(data.lobby.obstacles);
-                setTerrain(data.lobby.terrain);
-                setStatus(data.lobby.status);
+                setObstacles(data.obstacles);
+                setTerrain(data.terrain);
+                setStatus(data.status);
 
                 setPlayer(data.player);
                 position.current = data.position;
@@ -110,18 +110,18 @@ export default function GameRoom() {
                 setInitialized(true);
             }
 
-            else if (data.type === "state_update") {
+            else if (data.type === "stateUpdate") {
                 setStatus(data.status);
 
                 setPlayer(prev => prev ? {...prev, isFound: data.player.isFound, isHunter: data.player.isHunter} : prev)
                 setOtherPlayers(data.otherPlayers);
             }
 
-            else if (data.type === "time_update") {
+            else if (data.type === "timeUpdate") {
                 setTimeRemaining(data.remaining);
             }
 
-            else if (data.type === "capture_result") {
+            else if (data.type === "captureResult") {
                 if (data.success) {
                     setCaptureFeedback(`Hai catturato ${data.targetName}`);
                     setTimeout(() => {
@@ -135,7 +135,7 @@ export default function GameRoom() {
                 }
             }
 
-            else if (data.type === "game_over") {
+            else if (data.type === "gameOver") {
                 setStatus("ended");
                 setWinner(data.winner);
             }

@@ -1,10 +1,19 @@
-use hyper::{Request, StatusCode}
+use hyper::{Request, StatusCode};
+use hyper::body::Incoming;
 use hyper_tungstenite;
 
-use crate::types::{RegistryCommand, RoomHandle};
+use tokio::sync::oneshot;
 
-pub async fn handle_websocket_connection(request: Request<Incoming>, path: &str, registry_handle: RegistryHandle) -> HttpResponse {
-    let segments: Vec<&str> = path.split('/').filter(|s| !s.is_empty()).collect();
+use crate::types::{RegistryHandle, RegistryCommand, RoomHandle, HttpResponse};
+use crate::protocol::error_response;
+use crate::consumer::handle_consumer;
+
+pub async fn handle_websocket_upgrade(
+    request: Request<Incoming>, 
+    segments: &[&str], 
+    registry_handle: RegistryHandle
+) -> HttpResponse {
+
     if segments.len() != 3 || segments[0] != "lobby" {
         return error_response(StatusCode::BAD_REQUEST, "URL invalido per connessione alla lobby");
     }
@@ -41,7 +50,7 @@ pub async fn handle_websocket_connection(request: Request<Incoming>, path: &str,
     tokio::spawn(async move {
         match websocket.await {
             Ok(ws) => {
-                handle_connection(ws, room_handle, player_id).await;
+                handle_consumer(ws, room_handle, player_id).await;
             },
             Err(e) => {
                 eprintln!("Websocket connection failed: {e}");

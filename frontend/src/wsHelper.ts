@@ -26,23 +26,23 @@ export class WebsocketSend {
 
     public captureTarget = (targetId: string): void => {
         this.send({
-            type: "capture_attempt",
+            type: "captureAttempt",
             targetId
         })
     }
     public startGame = (): void => {
         this.send({
-            type: "start_game"
+            type: "startGame"
         })
     }
     public endGame = (): void => {
         this.send({
-            type: "end_game"
+            type: "endGame"
         })
     }
     public kickPlayer = (id: string): void => {
         this.send({
-            type: "kick_player",
+            type: "kickPlayer",
             id
         })
     }

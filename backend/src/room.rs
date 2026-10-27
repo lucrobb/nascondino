@@ -262,6 +262,8 @@ impl Room<'_> {
                 return;
             }
         };
+        let position = player.position;
+        let facing = player.facing;
         let other_players = self.get_other_players(player_id);
         
         self.send_to(player_id, ServerMessage::InitialState {
@@ -269,6 +271,8 @@ impl Room<'_> {
             obstacles: self.obstacles.to_vec(),
             terrain: self.terrain.to_vec(),
             player,
+            position,
+            facing, 
             other_players,
         }).await;
     }

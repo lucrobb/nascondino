@@ -1,3 +1,4 @@
+import type { ServerMessage } from "./types";
 
 const BASE_URL = import.meta.env.VITE_API_URL;
 type HTTPMethod = "GET" | "POST" | "DELETE" | "PATCH";
@@ -24,13 +25,10 @@ async function apiCall<TBody, TResponse>(url: string, method: HTTPMethod, body: 
     return res.json();
 }
 
-type LobbyResponse = { found: boolean } 
-type GetLobby = { roomCode: string };
-export async function getLobby(roomCode: string): Promise<LobbyResponse> {
-    return apiCall<GetLobby, LobbyResponse>("lobby", "GET", { roomCode });
+export async function getLobby(roomCode: string): Promise<ServerMessage> {
+    return apiCall<undefined, ServerMessage>(`lobby/${roomCode}`, "GET", undefined);
 }
 
-type CreateLobbyResponse = { roomCode: string }
-export async function createLobby(): Promise<CreateLobbyResponse> {
-    return apiCall<undefined, CreateLobbyResponse>("lobby", "POST", undefined);
+export async function createLobby(): Promise<ServerMessage> {
+    return apiCall<undefined, ServerMessage>("lobby", "POST", undefined);
 }

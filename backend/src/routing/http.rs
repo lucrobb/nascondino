@@ -1,5 +1,6 @@
 use crate::types::{RegistryCommand, RegistryHandle, ServerMessage, HttpResponse};
-use tokio::sync::onsehot;
+use crate::protocol::{http_response, error_response};
+use tokio::sync::oneshot;
 use hyper::StatusCode;
 
 pub async fn get_lobby(room_code: &str, registry_handle: RegistryHandle) -> HttpResponse {
@@ -12,17 +13,16 @@ pub async fn get_lobby(room_code: &str, registry_handle: RegistryHandle) -> Http
     }
 
     match reply_rx.await {
-        Ok(Some(result)) => {
-            if result {
-                return http_response(ServerMessage::LobbyResult { room_code: room_code.to_string() });
-            } else {
-                return error_response(
-                    StatusCode::NOT_FOUND,
-                    "Lobby non trovata",
-                );
-            }
+        Ok(true) => {
+            return http_response(ServerMessage::LobbyResult { room_code: room_code.to_string() });
         },
-        Err(e) => {
+        Ok(false) => {
+            return error_response(
+                StatusCode::NOT_FOUND,
+                "Lobby non trovata",
+            );
+        },
+        Err(_) => {
             eprintln!("Error receiving room code");
             return error_response(
                 StatusCode::INTERNAL_SERVER_ERROR, 
