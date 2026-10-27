@@ -83,7 +83,7 @@ export interface LobbyInitialization {
 
 export type ServerMessage = 
     | { type: "lobbyResult"; roomCode: string }
-    | { type: "initialState"; lobby: LobbyInitialization; player: Player; position: Vector3; facing: FacingAngles; otherPlayers: OtherPlayer[] }
+    | { type: "initialState"; obstacles: Obstacle[]; terrain: Terrain[]; status: StatusType; player: Player; position: Vector3; facing: FacingAngles; otherPlayers: OtherPlayer[] }
     | { type: "stateUpdate"; status: StatusType; player: PlayerUpdate; otherPlayers: OtherPlayer[] }
     | { type: "gameOver"; winner: "hunters" | "hiders" }
     | { type: "captureResult"; success: boolean; targetName: string }
