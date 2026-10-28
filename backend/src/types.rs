@@ -24,6 +24,7 @@ pub struct FacingAngles {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum GameStatus {
     Waiting,
     InProgress,
@@ -31,12 +32,14 @@ pub enum GameStatus {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum Winner {
     Hunters,
     Hiders,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum MaterialType {
     Concrete,
     Brick,
@@ -90,7 +93,8 @@ pub struct Player {
     pub disconnected_at: Option<Instant>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct OtherPlayerView {
     pub id: String,
     pub name: String,
@@ -99,16 +103,16 @@ pub struct OtherPlayerView {
     pub is_hunter: bool,
     pub is_found: bool,
 }
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct PlayerStateView {
     pub is_hunter: bool,
     pub is_found: bool,
 }
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct PlayerInitialState {
     pub name: String,
-    pub position: Vector3,
-    pub facing: FacingAngles,
     pub is_hunter: bool,
     pub is_found: bool,
     pub is_creator: bool,
@@ -140,8 +144,6 @@ impl Player {
     pub fn to_initial_state(&self) -> PlayerInitialState {
         PlayerInitialState {
             name: self.name.clone(),
-            position: self.position.clone(),
-            facing: self.facing.clone(),
             is_hunter: self.is_hunter,
             is_found: self.is_found,
             is_creator: self.is_creator,
@@ -210,7 +212,7 @@ pub enum RoomCommand {
 
 pub type HttpResponse = Response<Full<Bytes>>;
 
-#[derive(Serialize, Deserialize)]
+#[derive(Deserialize)]
 #[serde(tag = "type", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum ClientMessage {
     Join { name: String },
@@ -221,7 +223,7 @@ pub enum ClientMessage {
     CaptureAttempt { target_id: String },
 }
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize)]
 #[serde(tag = "type", rename_all = "camelCase", rename_all_fields = "camelCase")]
 pub enum ServerMessage {
     LobbyResult { room_code: String },
@@ -241,7 +243,7 @@ pub enum ServerMessage {
         player: PlayerStateView,
         other_players: Vec<OtherPlayerView>,
     },
-    TimeUpdate { remaining: u32 },
+    TimeUpdate { remaining: u64 },
     GameOver { winner: Winner },
     CaptureResult { success: bool, target_name: String },
     Kicked { message: String },

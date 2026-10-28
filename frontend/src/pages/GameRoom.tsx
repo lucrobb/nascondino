@@ -97,7 +97,9 @@ export default function GameRoom() {
             const data: ServerMessage = JSON.parse(event.data);
 
             if (data.type === "initialState") {
-
+                console.log("Initial state:", data);
+                console.log("Initial player:", data.player);
+                console.log("isCreator:", data.player?.isCreator);
                 setObstacles(data.obstacles);
                 setTerrain(data.terrain);
                 setStatus(data.status);
@@ -170,7 +172,7 @@ export default function GameRoom() {
             if ((!document.pointerLockElement && e.code === "Escape") || e.code === "Tab") {
                 document.exitPointerLock();
                 setMenuOpen(true); // pointer lock was exited (Esc, or programmatically) — show menu
-            } else if (e.code === "Enter" && player?.isCreator && status !== "in_progress") {
+            } else if (e.code === "Enter" && player?.isCreator && status !== "inProgress") {
                 wsSend.startGame();
             } else if (e.code === "Backspace" && status === "ended") {
                 navigate("/");

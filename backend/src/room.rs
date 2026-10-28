@@ -131,6 +131,7 @@ impl Room<'_> {
                 }
             },
             RoomCommand::StartGame { player_id } => {
+                println!("Room received StartGame from {player_id}");
                 match self.players.get(&player_id) {
                     Some(player) => {
                         if player.is_creator {
@@ -158,6 +159,14 @@ impl Room<'_> {
     }
 
     async fn tick(&mut self) {
+        if self.round_ends_at != None {
+            let time_left = self.round_ends_at
+                .unwrap()
+                .saturating_duration_since(Instant::now())
+                .as_secs();
+            self.broadcast(ServerMessage::TimeUpdate { remaining: time_left }).await;
+        }
+
         let mut removed_any = false;
 
         while let Some((at, _)) = self.disconnect_queue.front() {
@@ -256,21 +265,21 @@ impl Room<'_> {
 
     async fn send_initial_state(&self, player_id: &str) {
         let player = match self.players.get(player_id) {
-            Some(player) => player.to_initial_state(),
+            Some(player) => player,
             None => {
                 eprintln!("Player not found");
                 return;
             }
         };
-        let position = player.position;
-        let facing = player.facing;
+        let position = player.position.clone();
+        let facing = player.facing.clone();
         let other_players = self.get_other_players(player_id);
         
         self.send_to(player_id, ServerMessage::InitialState {
             status: self.status.clone(),
             obstacles: self.obstacles.to_vec(),
             terrain: self.terrain.to_vec(),
-            player,
+            player: player.to_initial_state(),
             position,
             facing, 
             other_players,

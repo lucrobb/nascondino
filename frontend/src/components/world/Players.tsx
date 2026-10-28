@@ -65,7 +65,6 @@ interface PlayersProps {
 
 //pId stores the user's own player, so they can't see themself
 export function Players({ players, playerHeight }: PlayersProps) {
-    console.log("Players:", players);
     return (
         <>
             {players.map((p) => !p.isFound && (

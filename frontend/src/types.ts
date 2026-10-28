@@ -66,7 +66,7 @@ export type PlayerUpdate = {
     isHunter: boolean;
 }
 
-export type StatusType = "waiting" | "in_progress" | "ended";
+export type StatusType = "waiting" | "inProgress" | "ended";
 
 export interface Lobby {
     obstacles: Obstacle[];

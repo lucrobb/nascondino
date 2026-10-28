@@ -36,7 +36,7 @@ pub async fn handle_consumer<S>(
 
                 if client_message.is_close() {
                     disconnect(player_id.clone(), &room_handle).await;
-                    println!("Client {player_id} sent a close frame");
+                    println!("Client {player_id} sent a close frame: {client_message}");
                     break;
                 }
 
