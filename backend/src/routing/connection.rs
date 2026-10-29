@@ -11,7 +11,7 @@ use crate::protocol::{error_response, add_cors_headers};
 
 
 pub async fn handle_request(
-    request: Request<Incoming>, 
+    request: Request<Incoming>,
     registry_handle: RegistryHandle
 ) -> Result<HttpResponse, Infallible> {
     let method = request.method().clone();
@@ -41,7 +41,15 @@ pub async fn handle_request(
     }
 
     //Handle HTTP requests and hand them off to the dedicated endpoints
-    match (method, segments[0]) {
+    // Expected api/... for segments, so at least 2 segments and then eventual parameters like room code
+    if segments.len() < 2 || segments[0] != "api" {
+        return Ok(error_response(
+            StatusCode::BAD_REQUEST,
+            "URL incompleto"
+        ));
+    }
+
+    match (method, segments[1]) {
         (Method::GET, "lobby") => {
             if segments.len() != 2 {
                 return Ok(error_response(
@@ -57,10 +65,9 @@ pub async fn handle_request(
         },
         _ => {
             return Ok(error_response(
-                StatusCode::NOT_FOUND, 
+                StatusCode::NOT_FOUND,
                 "Richiesta invalida",
             ));
         }
     }
 }
-
