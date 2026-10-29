@@ -7,6 +7,8 @@ mod types;
 mod vision;
 mod routing;
 
+use std::env;
+
 use tokio::net::TcpListener;
 use tokio::sync::mpsc; //Async tasks handling
 
@@ -24,7 +26,15 @@ async fn main() {
     let (registry_tx, registry_rx) = mpsc::channel(100);
     tokio::spawn(run_registry(registry_rx, registry_tx.clone()));
 
-    let listener = match TcpListener::bind("127.0.0.1:8000").await {
+    let port = match env::var("PORT").unwrap_or("8080".to_string()).parse::<u16>() {
+        Ok(port) => port,
+        Err(e) => {
+            eprintln!("Error parsing port: {e}");
+            return;
+        }
+    };
+
+    let listener = match TcpListener::bind(format!("0.0.0.0:{port}")).await {
         Ok(listener) => listener,
         Err(e) => {
             eprintln!("Couldn't bind the port: {e}");
@@ -61,6 +71,3 @@ async fn main() {
         });
     }
 }
-
-
-
