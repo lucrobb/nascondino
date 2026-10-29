@@ -181,8 +181,6 @@ export default function GameRoom() {
         document.addEventListener("keydown", onKeyDown);
         return () => document.removeEventListener("keydown", onKeyDown);
     }, [player, status]);
-    
-
 
     const PLAYER_HEIGHT = 1;
     const MAX_DISTANCE = 15;

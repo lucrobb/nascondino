@@ -226,6 +226,8 @@ impl Room<'_> {
 
         self.connections.remove(&id);
         self.players.remove(&id);
+
+        self.broadcast_state().await;
     }
 
     async fn broadcast(&self, message: ServerMessage) {

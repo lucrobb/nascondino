@@ -148,7 +148,7 @@ export function GameUi({
                 <div className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center">
                     <div className="animate-capture-event rounded-lg border border-primary/50 bg-background/90 px-6 py-4 text-center shadow-2xl backdrop-blur-md">
                         <div className="text-2xl font-bold uppercase tracking-wide text-primary">
-                            Catturato
+                            Cattura
                         </div>
 
                         <div className="mt-1 text-sm text-muted-foreground">
