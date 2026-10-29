@@ -209,14 +209,6 @@ impl Room<'_> {
     }
 
     async fn kick_player(&mut self, id: String, message: String) {
-        println!("Kicking player {id}");
-
-        println!(
-            "Player exists: {}, connection exists: {}",
-            self.players.contains_key(&id),
-            self.connections.contains_key(&id),
-        );
-
         match self.connections.get(&id) {
             Some(channel) => {
                 if let Err(e) = channel.send(ConsumerCommand::Kick {

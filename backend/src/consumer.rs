@@ -25,6 +25,7 @@ pub async fn handle_consumer<S>(
                     Some(Ok(message)) => message,
                     Some(Err(e)) => {
                         eprintln!("Websocket error for {player_id}: {e}");
+                        disconnect(player_id.clone(), my_tx.clone(), &room_handle).await;
                         break;
                     }
                     None => {
@@ -113,10 +114,7 @@ pub async fn handle_consumer<S>(
 
             room_message = my_rx.recv() => {
                 let (message, should_kick) = match room_message {
-                    Some(ConsumerCommand::Write { message }) => {
-                        println!("Consumer received kick message");
-                        (message, false)
-                    },
+                    Some(ConsumerCommand::Write { message }) => (message, false),
                     Some(ConsumerCommand::Kick { message }) => (message, true),
                     None => {
                         eprintln!("Room channel closed for {player_id}");
