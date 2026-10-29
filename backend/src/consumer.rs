@@ -90,11 +90,11 @@ pub async fn handle_consumer<S>(
                     }
 
                     //Lobby host controls, pass the player_id for creator confirmation
-                    ClientMessage::KickPlayer { kick_id } => {
+                    ClientMessage::KickPlayer { id } => {
                         log_send_error(
                             room_handle.send(RoomCommand::KickPlayer {
                                 player_id: player_id.clone(),
-                                kick_id
+                                kick_id: id,
                             }).await,
                         );
                     },

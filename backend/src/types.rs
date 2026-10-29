@@ -217,7 +217,7 @@ pub type HttpResponse = Response<Full<Bytes>>;
 pub enum ClientMessage {
     Join { name: String },
     Move { position: Vector3, facing: FacingAngles },
-    KickPlayer { kick_id: String },
+    KickPlayer { id: String },
     StartGame,
     EndGame,
     CaptureAttempt { target_id: String },
