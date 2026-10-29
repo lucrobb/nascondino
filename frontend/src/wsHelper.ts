@@ -6,51 +6,52 @@ export class WebsocketSend {
     constructor(socketRef: React.RefObject<WebSocket | null>){
         this.socketRef = socketRef;
     }
-    
+
     //We use arrow functions because they capture "this" value, making it possible to pass them down as props to components
     //while maintaining the information necessary to be derived from the class
     private send = (content: ClientMessage): void => {
-        if (this.socketRef.current) {
-            this.socketRef.current.send(JSON.stringify(content))
-        }
+      if (this.socketRef.current) {
+          this.socketRef.current.send(JSON.stringify(content))
+      }
     }
 
     public join = (name: string | null): void =>  {
-        if (!name) return;
-        
-        this.send({
-            type: "join",
-            name
-        })
+      if (!name) return;
+
+      this.send({
+          type: "join",
+          name
+      })
     }
 
     public captureTarget = (targetId: string): void => {
-        this.send({
-            type: "captureAttempt",
-            targetId
-        })
+      this.send({
+          type: "captureAttempt",
+          targetId
+      })
     }
     public startGame = (): void => {
-        this.send({
-            type: "startGame"
-        })
+      this.send({
+          type: "startGame"
+      })
     }
     public endGame = (): void => {
-        this.send({
-            type: "endGame"
-        })
+      this.send({
+          type: "endGame"
+      })
     }
-    public kickPlayer = (id: string): void => {
-        this.send({
-            type: "kickPlayer",
-            id
-        })
-    }
+  public kickPlayer = (id: string): void => {
+    console.log(`Kicking player: ${id}`);
+    this.send({
+        type: "kickPlayer",
+        id
+    })
+  }
     public move = (position: Vector3, facing: FacingAngles): void => {
-        this.send({
-            type: "move",
-            position,
-            facing
-        })
+      this.send({
+          type: "move",
+          position,
+          facing
+      })
     }
 }
