@@ -51,13 +51,13 @@ pub async fn handle_request(
 
     match (method, segments[1]) {
         (Method::GET, "lobby") => {
-            if segments.len() != 2 {
+            if segments.len() != 3 {
                 return Ok(error_response(
                     StatusCode::BAD_REQUEST,
                     "URL invalido"
                 ));
             }
-            let room_code = segments[1];
+            let room_code = segments[2];
             return Ok(get_lobby(room_code, registry_handle).await);
         },
         (Method::POST, "lobby") => {
