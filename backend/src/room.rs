@@ -108,10 +108,10 @@ impl Room<'_> {
                 self.add_player(player_id, name, consumer_tx).await;
             },
             RoomCommand::Disconnect { player_id, old_connection } => {
-                self.disconnect_player(player_id, old_connection);
+                self.disconnect_player(player_id, old_connection).await;
             },
             RoomCommand::Move { player_id, position, facing } => {
-                self.move_player(player_id, position, facing);
+                self.move_player(player_id, position, facing).await;
             },
             RoomCommand::CaptureAttempt { player_id, target_id } => {
                 self.capture_attempt(player_id, target_id).await;
@@ -320,7 +320,7 @@ impl Room<'_> {
         self.broadcast_state().await;
     }
 
-    fn disconnect_player(&mut self, player_id: String, old_connection: ConsumerHandle) {
+    async fn disconnect_player(&mut self, player_id: String, old_connection: ConsumerHandle) {
         let curr_connection = match self.connections.get(&player_id) {
             Some(connection) => connection,
             None => {
@@ -346,13 +346,15 @@ impl Room<'_> {
         player.disconnected_at = Some(now);
         player.connected = false;
         self.disconnect_queue.push_back((now, player_id));
+
+        self.broadcast_state().await;
     }
 
     //--------------------------------------------------------------------------------------------------------------------
     //Player action
     //--------------------------------------------------------------------------------------------------------------------
 
-    fn move_player(&mut self, player_id: String, position: Vector3, facing: FacingAngles) {
+    async fn move_player(&mut self, player_id: String, position: Vector3, facing: FacingAngles) {
         match self.players.get_mut(&player_id) {
             Some(player) => {
                 player.position = position;
@@ -360,6 +362,7 @@ impl Room<'_> {
             },
             None => return
         }
+        self.broadcast_state().await;
     }
 
     async fn capture_attempt(&mut self, player_id: String, target_id: String) {
