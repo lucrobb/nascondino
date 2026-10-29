@@ -184,8 +184,7 @@ impl Room<'_> {
                 None => false,
             };
             if still_gone {
-                self.players.remove(&id);
-                self.connections.remove(&id);
+                self.kick_player(id, "È avvenuta la sconnessione dalla lobby".to_string()).await;
                 removed_any = true;
             }
         }
@@ -220,7 +219,6 @@ impl Room<'_> {
             },
             None => {
                 eprintln!("Could not kick {id}, user not found");
-                return;
             },
         }
 
@@ -299,7 +297,11 @@ impl Room<'_> {
             existing_player.disconnected_at = None;
         } else {
             if self.status == GameStatus::InProgress {
-                self.kick_player(player_id, "La partita è già iniziata".to_string()).await;
+                if let Err(e) = consumer_tx.send(ConsumerCommand::Kick {
+                    message: ServerMessage::Kicked { message: "La partita è già iniziata".to_string() }
+                }).await {
+                    eprintln!("Failed to notify player of join rejection: {e}");
+                }
                 return;
             }
 
