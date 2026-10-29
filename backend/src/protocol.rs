@@ -9,6 +9,8 @@ use hyper::header::{
     ACCESS_CONTROL_ALLOW_ORIGIN
 };
 
+use std::env;
+
 use crate::types::{ClientMessage, ServerMessage, HttpResponse};
 
 pub fn decode(data: &[u8]) -> Result<ClientMessage, String> {
@@ -28,9 +30,22 @@ pub fn encode(data: &ServerMessage) -> Result<String, String> {
 pub fn add_cors_headers(response: &mut HttpResponse) {
     let headers = response.headers_mut();
 
+    let origin = env::var("FRONTEND_ORIGIN").unwrap_or("http://localhost:5173".to_string());
+    let origin_header = match HeaderValue::from_str(&origin) {
+        Ok(value) => value,
+        Err(e) => {
+            eprintln!("Invalid FRONTEND_ORIGIN: {e}");
+            *response = error_response(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "Invalid frontend origin configuration",
+            );
+            return;
+        }
+    };
+
     headers.insert(
         ACCESS_CONTROL_ALLOW_ORIGIN,
-        HeaderValue::from_static("http://localhost:5173"),
+        origin_header,
     );
 
     headers.insert(
