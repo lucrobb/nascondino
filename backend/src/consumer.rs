@@ -1,12 +1,12 @@
+use futures_util::SinkExt;
+use futures_util::stream::StreamExt;
+use hyper_tungstenite::WebSocketStream;
+use hyper_tungstenite::tungstenite::Message;
 use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::sync::mpsc;
-use hyper_tungstenite::tungstenite::Message;
-use hyper_tungstenite::WebSocketStream;
-use futures_util::stream::StreamExt;
-use futures_util::SinkExt;
 
 use crate::protocol::{decode, encode};
-use crate::types::{RoomHandle, ClientMessage, RoomCommand, ConsumerCommand};
+use crate::types::{ClientMessage, ConsumerCommand, RoomCommand, RoomHandle};
 
 pub async fn handle_consumer<S>(
     ws: WebSocketStream<S>, 
@@ -53,8 +53,8 @@ pub async fn handle_consumer<S>(
                         eprintln!("Error parsing client message: {e}");
                         continue;
                     }
-                };   
-
+                };
+                
                 fn log_send_error(result: Result<(), mpsc::error::SendError<RoomCommand>>) {
                     if let Err(e) = result {
                         eprintln!("Failed to send room command: {e}");
@@ -140,7 +140,7 @@ pub async fn handle_consumer<S>(
             }
         }
     }
-} 
+}
 
 //Handle disconnect (not triggered by kick message because room already removed client, not the same as disconnection)
 async fn disconnect(player_id: String, room_handle: &RoomHandle) {
