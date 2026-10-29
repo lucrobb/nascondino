@@ -41,7 +41,6 @@ export class WebsocketSend {
       })
     }
   public kickPlayer = (id: string): void => {
-    console.log(`Kicking player: ${id}`);
     this.send({
         type: "kickPlayer",
         id
