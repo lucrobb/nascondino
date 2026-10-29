@@ -39,53 +39,6 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-
-# ============================================================
-# Python
-# ============================================================
-
-__pycache__/
-**/__pycache__/
-
-*.py[cod]
-*.pyo
-*.pyd
-
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-
-# Python virtual environments
-venv/
-.venv/
-env/
-ENV/
-**/venv/
-**/.venv/
-**/env/
-
-
-# ============================================================
-# Django
-# ============================================================
-
-# SQLite databases
-*.sqlite3
-*.sqlite3-journal
-*.sqlite3-shm
-*.sqlite3-wal
-
-# Django generated files
-media/
-staticfiles/
-
-# Collected/static generated files
-**/staticfiles/
-
-# Logs
-*.log
-
-
 # ============================================================
 # Environment / secrets
 # ============================================================
@@ -107,3 +60,9 @@ staticfiles/
 tmp/
 temp/
 .cache/
+
+# ============================================================
+#Rust 
+# ============================================================
+
+target/

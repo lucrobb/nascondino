@@ -11,7 +11,7 @@ import type {
     Terrain,
     Movement,
 } from '../types';
-import { WebsocketSend } from '../api/game';
+import { WebsocketSend } from '../wsHelper';
 import { toast } from 'sonner';
 import { Canvas } from "@react-three/fiber";
 import { PointerLockControls } from "@react-three/drei";
@@ -96,11 +96,13 @@ export default function GameRoom() {
         socket.onmessage = (event) => {
             const data: ServerMessage = JSON.parse(event.data);
 
-            if (data.type === "initial_state") {
-
-                setObstacles(data.lobby.obstacles);
-                setTerrain(data.lobby.terrain);
-                setStatus(data.lobby.status);
+            if (data.type === "initialState") {
+                console.log("Initial state:", data);
+                console.log("Initial player:", data.player);
+                console.log("isCreator:", data.player?.isCreator);
+                setObstacles(data.obstacles);
+                setTerrain(data.terrain);
+                setStatus(data.status);
 
                 setPlayer(data.player);
                 position.current = data.position;
@@ -110,18 +112,18 @@ export default function GameRoom() {
                 setInitialized(true);
             }
 
-            else if (data.type === "state_update") {
+            else if (data.type === "stateUpdate") {
                 setStatus(data.status);
 
                 setPlayer(prev => prev ? {...prev, isFound: data.player.isFound, isHunter: data.player.isHunter} : prev)
                 setOtherPlayers(data.otherPlayers);
             }
 
-            else if (data.type === "time_update") {
+            else if (data.type === "timeUpdate") {
                 setTimeRemaining(data.remaining);
             }
 
-            else if (data.type === "capture_result") {
+            else if (data.type === "captureResult") {
                 if (data.success) {
                     setCaptureFeedback(`Hai catturato ${data.targetName}`);
                     setTimeout(() => {
@@ -135,7 +137,7 @@ export default function GameRoom() {
                 }
             }
 
-            else if (data.type === "game_over") {
+            else if (data.type === "gameOver") {
                 setStatus("ended");
                 setWinner(data.winner);
             }
@@ -170,7 +172,7 @@ export default function GameRoom() {
             if ((!document.pointerLockElement && e.code === "Escape") || e.code === "Tab") {
                 document.exitPointerLock();
                 setMenuOpen(true); // pointer lock was exited (Esc, or programmatically) — show menu
-            } else if (e.code === "Enter" && player?.isCreator && status !== "in_progress") {
+            } else if (e.code === "Enter" && player?.isCreator && status !== "inProgress") {
                 wsSend.startGame();
             } else if (e.code === "Backspace" && status === "ended") {
                 navigate("/");

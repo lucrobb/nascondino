@@ -66,7 +66,7 @@ export type PlayerUpdate = {
     isHunter: boolean;
 }
 
-export type StatusType = "waiting" | "in_progress" | "ended";
+export type StatusType = "waiting" | "inProgress" | "ended";
 
 export interface Lobby {
     obstacles: Obstacle[];
@@ -82,22 +82,23 @@ export interface LobbyInitialization {
 }
 
 export type ServerMessage = 
-    | { type: "initial_state"; lobby: LobbyInitialization; player: Player; position: Vector3; facing: FacingAngles; otherPlayers: OtherPlayer[] }
-    | { type: "state_update"; status: StatusType; player: PlayerUpdate; otherPlayers: OtherPlayer[] }
-    | { type: "game_over"; winner: "hunters" | "hiders" }
-    | { type: "capture_result"; success: boolean; targetName: string }
+    | { type: "lobbyResult"; roomCode: string }
+    | { type: "initialState"; obstacles: Obstacle[]; terrain: Terrain[]; status: StatusType; player: Player; position: Vector3; facing: FacingAngles; otherPlayers: OtherPlayer[] }
+    | { type: "stateUpdate"; status: StatusType; player: PlayerUpdate; otherPlayers: OtherPlayer[] }
+    | { type: "gameOver"; winner: "hunters" | "hiders" }
+    | { type: "captureResult"; success: boolean; targetName: string }
     | { type: "error"; message: string }
     | { type: "kicked"; message: string }
-    | { type: "time_update"; remaining: number}
+    | { type: "timeUpdate"; remaining: number}
 
 
 export type ClientMessage = 
     | { type: "move"; position: Vector3; facing: FacingAngles }
     | { type: "join"; name: string}
-    | { type: "start_game" }
-    | { type: "end_game" }
-    | { type: "capture_attempt"; targetId: string }
-    | { type: "kick_player"; id: string }
+    | { type: "startGame" }
+    | { type: "endGame" }
+    | { type: "captureAttempt"; targetId: string }
+    | { type: "kickPlayer"; id: string }
 
 
 

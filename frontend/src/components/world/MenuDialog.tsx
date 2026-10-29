@@ -1,4 +1,4 @@
-import type { WebsocketSend } from "../../api/game";
+import type { WebsocketSend } from "../../wsHelper";
 import type { OtherPlayer, StatusType } from "../../types";
 
 import {
@@ -107,7 +107,7 @@ export function MenuDialog({
                                         </div>
 
                                         <div className="flex flex-col gap-2">
-                                            {status !== "in_progress" && (
+                                            {status !== "inProgress" && (
                                                 <Button
                                                     onClick={() => {
                                                         onWsSend.startGame();
@@ -119,7 +119,7 @@ export function MenuDialog({
                                                 </Button>
                                             )}
 
-                                            {status === "in_progress" && (
+                                            {status === "inProgress" && (
                                                 <Button
                                                     variant="destructive"
                                                     onClick={onWsSend.endGame}

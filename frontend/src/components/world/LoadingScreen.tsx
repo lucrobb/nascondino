@@ -1,10 +1,8 @@
 interface LoadingScreenProps {
-    message?: string;
+    message: string;
 }
 
-export function LoadingScreen({
-    message = "Caricamento partita",
-}: LoadingScreenProps) {
+export function LoadingScreen({ message }: LoadingScreenProps) {
     return (
         <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background text-foreground">
             {/* Subtle background grid */}
@@ -57,10 +55,6 @@ export function LoadingScreen({
                         <div className="h-full w-1/3 animate-[loading_1.5s_ease-in-out_infinite] rounded-full bg-primary" />
                     </div>
                 </div>
-
-                <p className="mt-5 text-center text-xs uppercase tracking-wider text-muted-foreground">
-                    Preparazione della partita
-                </p>
             </div>
 
             <style>{`

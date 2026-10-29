@@ -1,7 +1,7 @@
 import type { StatusType, Player } from "../../types";
 import { Button } from "../ui/button";
 import { Kbd } from "../ui/kbd";
-import { WebsocketSend } from "../../api/game";
+import { WebsocketSend } from "../../wsHelper";
 import { cn } from "cn";
 
 interface GameUiProps {
@@ -35,12 +35,12 @@ export function GameUi({
             : null;
 
     const gameEnded = status === "ended";
-    const playerWasFound = status === "in_progress" && player.isFound;
+    const playerWasFound = status === "inProgress" && player.isFound;
 
     return (
         <>
             {/* Crosshair */}
-            {status === "in_progress" && !playerWasFound && (
+            {status === "inProgress" && !playerWasFound && (
                 <div className="pointer-events-none fixed inset-0 z-10 flex items-center justify-center">
                     <div
                         className={`h-1.5 w-1.5 rounded-full transition-all duration-200 ${
@@ -53,7 +53,7 @@ export function GameUi({
             )}
             
             {/* Mobile capture button */}
-            {status === "in_progress" && player.isHunter && showTouchControls && (
+            {status === "inProgress" && player.isHunter && showTouchControls && (
                 <div className="fixed bottom-8 right-8 z-20">
                     <Button
                         type="button"
@@ -81,7 +81,7 @@ export function GameUi({
             {/* Top-right controls */}
             {!gameEnded && (
                 <div className="fixed right-6 top-6 z-20 flex flex-col items-end gap-2">
-                    {player.isCreator && status !== "in_progress" && (
+                    {player.isCreator && status !== "inProgress" && (
                         <Button
                             onClick={onWsSend.startGame}
                             className="h-10 rounded-md border border-primary/20 px-4 uppercase tracking-wide shadow-lg shadow-black/5"
@@ -96,7 +96,7 @@ export function GameUi({
             )}
 
             {/* Timer */}
-            {status === "in_progress" && !playerWasFound && (
+            {status === "inProgress" && !playerWasFound && (
                 <div className="pointer-events-none fixed right-6 top-6 z-20">
                     <div className="rounded-md border border-border/80 bg-background/75 px-4 py-2.5 shadow-lg shadow-black/5 backdrop-blur-md">
                         <div className="flex items-baseline gap-2">
@@ -128,7 +128,7 @@ export function GameUi({
             )}
 
             {/* Player role */}
-            {status === "in_progress" && !playerWasFound && (
+            {status === "inProgress" && !playerWasFound && (
                 <div className="pointer-events-none fixed bottom-6 left-1/2 z-20 -translate-x-1/2">
                     <div
                         className={cn(
@@ -144,7 +144,7 @@ export function GameUi({
             )}
 
             {/* Hunter capture feedback */}
-            {captureFeedback && status === "in_progress" && (
+            {captureFeedback && status === "inProgress" && (
                 <div className="pointer-events-none fixed inset-0 z-30 flex items-center justify-center">
                     <div className="animate-capture-event rounded-lg border border-primary/50 bg-background/90 px-6 py-4 text-center shadow-2xl backdrop-blur-md">
                         <div className="text-2xl font-bold uppercase tracking-wide text-primary">
