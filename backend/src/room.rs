@@ -20,8 +20,8 @@ use crate::types::{
     OtherPlayerView,
 };
 use crate::constants::{
-    DEFAULT_OBSTACLES, 
-    DEFAULT_TERRAIN, 
+    DEFAULT_OBSTACLES,
+    DEFAULT_TERRAIN,
     DEFAULT_SPAWN_POSITION,
     RECONNECT_TIMEOUT,
     ROUND_DURATION,
@@ -35,7 +35,7 @@ pub struct Room<'a> {
     room_code: String,
 
     players: HashMap<String, Player>,
-    connections: HashMap<String, ConsumerHandle>, 
+    connections: HashMap<String, ConsumerHandle>,
     disconnect_queue: VecDeque<(Instant, String)>,
 
     obstacles: &'a [Obstacle],
@@ -82,7 +82,7 @@ impl Room<'_> {
                         },
                         None => { // every sender is gone
                             break;
-                        }, 
+                        },
                     }
                 }
                 _ = ticker.tick() => {
@@ -107,8 +107,8 @@ impl Room<'_> {
             RoomCommand::Join { player_id, name, consumer_tx } => {
                 self.add_player(player_id, name, consumer_tx).await;
             },
-            RoomCommand::Disconnect { player_id } => {
-                self.disconnect_player(player_id);
+            RoomCommand::Disconnect { player_id, old_connection } => {
+                self.disconnect_player(player_id, old_connection);
             },
             RoomCommand::Move { player_id, position, facing } => {
                 self.move_player(player_id, position, facing);
@@ -237,13 +237,13 @@ impl Room<'_> {
     //--------------------------------------------------------------------------------------------------------------------
     //State update functions
     //--------------------------------------------------------------------------------------------------------------------
-    
+
     fn get_other_players(&self, me_id: &str) -> Vec<OtherPlayerView> {
         let mut other_players = Vec::new();
         for (pid, player) in &self.players {
             if pid != me_id && player.connected {
                 other_players.push(player.to_other_player(pid));
-            } 
+            }
         }
         return other_players;
     }
@@ -274,14 +274,14 @@ impl Room<'_> {
         let position = player.position.clone();
         let facing = player.facing.clone();
         let other_players = self.get_other_players(player_id);
-        
+
         self.send_to(player_id, ServerMessage::InitialState {
             status: self.status.clone(),
             obstacles: self.obstacles.to_vec(),
             terrain: self.terrain.to_vec(),
             player: player.to_initial_state(),
             position,
-            facing, 
+            facing,
             other_players,
         }).await;
     }
@@ -313,14 +313,26 @@ impl Room<'_> {
             );
 
             self.players.insert(player_id.clone(), new_player);
-            self.connections.insert(player_id.clone(), consumer_tx);
         }
 
+        self.connections.insert(player_id.clone(), consumer_tx);
         self.send_initial_state(&player_id).await;
         self.broadcast_state().await;
     }
 
-    fn disconnect_player(&mut self, player_id: String) {
+    fn disconnect_player(&mut self, player_id: String, old_connection: ConsumerHandle) {
+        let curr_connection = match self.connections.get(&player_id) {
+            Some(connection) => connection,
+            None => {
+                eprintln!("User connection not found: {player_id}");
+                return;
+            }
+        };
+        //If the user has already established a new channel we don't need to do anything, the old channel is no longer in need of disconnection
+        if !curr_connection.same_channel(&old_connection) {
+            return;
+        }
+
         let player = match self.players.get_mut(&player_id) {
             Some(player) => player,
             None => {
@@ -328,13 +340,16 @@ impl Room<'_> {
                 return;
             },
         };
+        self.connections.remove(&player_id);
+
         let now = Instant::now();
         player.disconnected_at = Some(now);
+        player.connected = false;
         self.disconnect_queue.push_back((now, player_id));
     }
 
     //--------------------------------------------------------------------------------------------------------------------
-    //Player action 
+    //Player action
     //--------------------------------------------------------------------------------------------------------------------
 
     fn move_player(&mut self, player_id: String, position: Vector3, facing: FacingAngles) {
@@ -383,7 +398,7 @@ impl Room<'_> {
         let success = vision.is_player_visible(&target);
         target.is_found = success;
         let target_name = target.name.clone().to_string();
-        
+
         self.send_to(&player_id, ServerMessage::CaptureResult {
             success,
             target_name,

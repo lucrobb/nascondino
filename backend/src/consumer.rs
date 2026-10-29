@@ -6,11 +6,11 @@ use tokio::io::{AsyncRead, AsyncWrite};
 use tokio::sync::mpsc;
 
 use crate::protocol::{decode, encode};
-use crate::types::{ClientMessage, ConsumerCommand, RoomCommand, RoomHandle};
+use crate::types::{ClientMessage, ConsumerCommand, ConsumerHandle, RoomCommand, RoomHandle};
 
 pub async fn handle_consumer<S>(
-    ws: WebSocketStream<S>, 
-    room_handle: RoomHandle, 
+    ws: WebSocketStream<S>,
+    room_handle: RoomHandle,
     player_id: String
 ) where S: AsyncRead + AsyncWrite + Unpin {
     let (my_tx, mut my_rx) = mpsc::channel(100);
@@ -28,14 +28,14 @@ pub async fn handle_consumer<S>(
                         break;
                     }
                     None => {
-                        disconnect(player_id.clone(), &room_handle).await;
+                        disconnect(player_id.clone(), my_tx.clone(), &room_handle).await;
                         println!("Client {player_id} disconnected");
                         break;
                     }
                 };
 
                 if client_message.is_close() {
-                    disconnect(player_id.clone(), &room_handle).await;
+                    disconnect(player_id.clone(), my_tx.clone(), &room_handle).await;
                     println!("Client {player_id} sent a close frame: {client_message}");
                     break;
                 }
@@ -54,7 +54,7 @@ pub async fn handle_consumer<S>(
                         continue;
                     }
                 };
-                
+
                 fn log_send_error(result: Result<(), mpsc::error::SendError<RoomCommand>>) {
                     if let Err(e) = result {
                         eprintln!("Failed to send room command: {e}");
@@ -143,8 +143,8 @@ pub async fn handle_consumer<S>(
 }
 
 //Handle disconnect (not triggered by kick message because room already removed client, not the same as disconnection)
-async fn disconnect(player_id: String, room_handle: &RoomHandle) {
-    if let Err(e) = room_handle.send(RoomCommand::Disconnect { player_id }).await {
+async fn disconnect(player_id: String, old_connection: ConsumerHandle, room_handle: &RoomHandle) {
+    if let Err(e) = room_handle.send(RoomCommand::Disconnect { player_id, old_connection }).await {
         eprintln!("Failed to notify room of user disconnection: {e}");
     }
 }

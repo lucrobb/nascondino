@@ -62,7 +62,7 @@ pub fn http_response(data: ServerMessage) -> HttpResponse {
         .body(Full::new(Bytes::from(body)))
         .unwrap();
     add_cors_headers(&mut http_body);
-    
+
     return http_body;
 }
 

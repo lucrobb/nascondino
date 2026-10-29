@@ -121,7 +121,7 @@ pub struct PlayerInitialState {
 impl Player {
     pub fn new(
         name: String,
-        position: Vector3, 
+        position: Vector3,
         facing: FacingAngles,
         is_hunter: bool,
         is_found: bool,
@@ -159,7 +159,7 @@ impl Player {
 
     pub fn to_other_player(&self, id: &str) -> OtherPlayerView {
         OtherPlayerView {
-            id: id.to_string(), 
+            id: id.to_string(),
             name: self.name.clone(),
             position: self.position.clone(),
             facing: self.facing.clone(),
@@ -198,7 +198,7 @@ pub type ConsumerHandle = mpsc::Sender<ConsumerCommand>;
 
 pub enum RoomCommand {
     Join { player_id: String, name: String, consumer_tx: ConsumerHandle },
-    Disconnect { player_id: String },
+    Disconnect { player_id: String, old_connection: ConsumerHandle },
     Move { player_id: String, position: Vector3, facing: FacingAngles },
     CaptureAttempt { player_id: String, target_id: String },
     KickPlayer { player_id: String, kick_id: String },
@@ -255,10 +255,9 @@ pub enum ServerMessage {
 //-----------------------------------------------------------------------------------------------------
 
 pub struct Region {
-    pub h_start: f64, 
+    pub h_start: f64,
     pub h_end: f64,
     pub v_start: f64,
     pub v_end: f64,
     pub is_obstacle: bool
 }
-
