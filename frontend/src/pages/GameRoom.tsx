@@ -1,12 +1,12 @@
 import { useParams, useNavigate } from 'react-router';
 import { useEffect, useState, useRef } from 'react';
-import type { 
-    Vector3, 
-    ServerMessage, 
-    FacingAngles, 
-    Player, 
+import type {
+    Vector3,
+    ServerMessage,
+    FacingAngles,
+    Player,
     OtherPlayer,
-    StatusType, 
+    StatusType,
     Obstacle,
     Terrain,
     Movement,
@@ -30,7 +30,7 @@ import { MenuDialog } from '../components/world/MenuDialog';
 import { SceneFog } from '../components/world/SceneFog';
 import { LoadingScreen } from '@/components/world/LoadingScreen';
 import { Joystick } from '../components/world/Joystick';
-import { CameraTouch } from '../components/world/CameraTouch'; 
+import { CameraTouch } from '../components/world/CameraTouch';
 
 
 export default function GameRoom() {
@@ -198,22 +198,24 @@ export default function GameRoom() {
 
     const [showTouchControls, setShowTouchControls] = useState<boolean>(false);
     useEffect(() => {
-        const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-        setShowTouchControls(hasTouch);
+      const hasTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+      setShowTouchControls(hasTouch);
     }, []);
 
     const raycaster = useRef<Raycaster>(new Raycaster());
 
     function onCapture() {
-        if (!camera || !scene || !gl) return;
-        raycaster.current.setFromCamera(new Vector2(0, 0), camera);
-        const hits = raycaster.current.intersectObjects(scene.children, true);
+      if (!camera || !scene || !gl) return;
 
-        if (hits.length > 0 && hits[0].object.userData.playerId) {
-            const targetId: string = hits[0].object.userData.playerId;
-            console.log("Sent capture attempt");
-            wsSend.captureTarget(targetId);
-        }
+      camera.updateMatrixWorld(true);
+      raycaster.current.setFromCamera(new Vector2(0, 0), camera);
+      const hits = raycaster.current.intersectObjects(scene.children, true);
+
+      if (hits.length > 0 && hits[0].object.userData.playerId) {
+          const targetId: string = hits[0].object.userData.playerId;
+          console.log("Sent capture attempt");
+          wsSend.captureTarget(targetId);
+      }
     }
 
     useEffect(() => {
@@ -246,7 +248,7 @@ export default function GameRoom() {
                                 onWsSend={wsSend}
                                 onNavigate={navigate}
                                 otherPlayers={otherPlayers}
-                            />  
+                            />
                             <GameUi
                                 status={status}
                                 timeRemaining={timeRemaining}
