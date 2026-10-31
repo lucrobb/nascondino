@@ -207,7 +207,6 @@ export default function GameRoom() {
     function onCapture() {
       if (!camera || !scene || !gl) return;
 
-      camera.updateMatrixWorld(true);
       raycaster.current.setFromCamera(new Vector2(0, 0), camera);
       const hits = raycaster.current.intersectObjects(scene.children, true);
 
@@ -259,6 +258,7 @@ export default function GameRoom() {
                                 captureFeedback={captureFeedback}
                                 onCapture={onCapture}
                                 showTouchControls={showTouchControls}
+                                onMenuOpenChange={setMenuOpen}
                             />
                             {showTouchControls && camera && (
                                 <>
