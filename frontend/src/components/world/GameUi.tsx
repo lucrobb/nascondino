@@ -66,9 +66,9 @@ export function GameUi({
                       e.preventDefault();
                       onCapture();
                   }}
-                  className="rounded-full border-border/70 bg-background/80 shadow-lg backdrop-blur-md transition-transform active:scale-95 touch-none"
+                  className="h-16 w-16 rounded-full border-border/70 bg-background/80 shadow-lg backdrop-blur-md transition-transform active:scale-95 touch-none"
               >
-                <Crosshair className="size-7" strokeWidth={2} />
+                <Crosshair className="size-8" strokeWidth={2} />
               </Button>
             </div>
           )}
