@@ -57,22 +57,22 @@ export function CameraTouch({ camera }: CameraTouchProps) {
     ) {
         if (e.pointerId !== pointerId.current) return;
 
-        const dx =
-            e.clientX - lastPosition.current.x;
-
-        const dy =
-            e.clientY - lastPosition.current.y;
+        const dx = e.clientX - lastPosition.current.x;
+        const dy = e.clientY - lastPosition.current.y;
 
         lastPosition.current = {
             x: e.clientX,
             y: e.clientY,
         };
 
-        yaw.current -= dx * SENSITIVITY;
-        pitch.current -= dy * SENSITIVITY;
+        const euler = new THREE.Euler().setFromQuaternion(
+            camera.quaternion,
+            "YXZ"
+        );
 
+        yaw.current = euler.y - dx * SENSITIVITY;
         pitch.current = THREE.MathUtils.clamp(
-            pitch.current,
+            euler.x - dy * SENSITIVITY,
             -MAX_PITCH,
             MAX_PITCH
         );
