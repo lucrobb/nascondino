@@ -68,7 +68,7 @@ export function GameUi({
                   }}
                   className="h-16 w-16 rounded-full border-border/70 bg-background/80 shadow-lg backdrop-blur-md transition-transform active:scale-95 touch-none"
               >
-                <Crosshair size={18} strokeWidth={1.5} />
+                <Crosshair size={25} strokeWidth={2} />
               </Button>
             </div>
           )}
@@ -83,8 +83,9 @@ export function GameUi({
                   e.preventDefault();
                   onMenuOpenChange(true);
                 }}
+                className="h-16 w-16 rounded-full border-border/70 bg-background/80 shadow-lg backdrop-blur-md transition-transform active:scale-95 touch-none"
               >
-                <Menu size={18} strokeWidth={1.5} />
+                <Menu size={16} strokeWidth={20} />
               </Button>
             </div>
           )}
